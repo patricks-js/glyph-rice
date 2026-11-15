@@ -13,7 +13,7 @@ PanelWindow {
 
     property int sel: 2
     readonly property var items: [
-        ["LOCK", () => Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/rice/rice", "lock"])],
+        ["LOCK", () => Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/glyph/rice", "lock"])],
         ["SLEEP", () => Quickshell.execDetached(["systemctl", "suspend"])],
         ["SHUT DOWN", () => Quickshell.execDetached(["systemctl", "poweroff"])],
         ["REBOOT", () => Quickshell.execDetached(["systemctl", "reboot"])],

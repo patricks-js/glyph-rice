@@ -152,8 +152,6 @@ Scope {
                             anchors.verticalCenter: parent.verticalCenter
                             text: Weather.glyph(Weather.now?.code ?? 3, Weather.now?.day)
                             font.pixelSize: 48
-                            layer.enabled: true
-                            layer.effect: Dm { step: 3 }
                         }
                         Num { anchors.verticalCenter: parent.verticalCenter; text: Weather.ok ? Math.round(Weather.now.temp) + "°" : "--"; font.pixelSize: 54 }
                     }
@@ -173,8 +171,6 @@ Scope {
                                     topPadding: lead + 6
                                     text: Weather.glyph(modelData.code, true)
                                     font.pixelSize: 24
-                                    layer.enabled: true
-                                    layer.effect: Dm { step: 2 }
                                 }
                                 Lb { anchors.horizontalCenter: parent.horizontalCenter; topPadding: 6; text: Math.round(modelData.max) + "°"; px: 11; color: Theme.fg }
                                 Lb { anchors.horizontalCenter: parent.horizontalCenter; text: Math.round(modelData.min) + "°"; px: 11 }

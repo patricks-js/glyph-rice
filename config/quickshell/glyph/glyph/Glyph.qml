@@ -213,8 +213,6 @@ Scope {
                                         visible: status === Image.Ready
                                         source: c.icon ? Quickshell.iconPath(c.icon, true) : ""
                                         sourceSize: Qt.size(28, 28)
-                                        layer.enabled: true
-                                        layer.effect: Dm { step: 2 }
                                     }
                                 }
                                 Column {

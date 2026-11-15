@@ -11,7 +11,6 @@ Singleton {
 
     property bool detailed: false
     property bool perf: false
-    property bool cat: false
 
     property real cpu: 0          // 0…1
     property var cores: []        // 0…1 по ядрам
@@ -126,7 +125,7 @@ for c in /sys/class/drm/card*/device; do [ -e "$c/gpu_busy_percent" ] && { echo 
 
     Timer {
         interval: 2000
-        running: root.detailed || root.cat
+        running: root.detailed
         repeat: true
         triggeredOnStart: true
         onTriggered: root.sample()

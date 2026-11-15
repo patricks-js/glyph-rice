@@ -31,7 +31,7 @@ PanelWindow {
     }
     // открытый список: "wifi" | "bt" — под пилюлями (Picker), "rec" — под плитками (Rec), "" — ничего
     property string pick: ""
-    onOpenChanged: if (open) Sys.earRun([]); else pick = ""
+    onOpenChanged: if (!open) pick = ""
     // курсор 500мс вне панели и полосы Hot — закрываем. seen: Hyprland не отдаёт курсор свежей поверхности, пока мышь не сдвинется —
     // до первого движения неизвестно, где он, и панель ждёт (иначе у неподвижного курсора открывалась и тут же закрывалась)
     Timer { interval: 500; running: root.open && root.peeked && seen.hovered && !keep.hovered && !edge.hovered; onTriggered: root.close() }
@@ -133,57 +133,6 @@ PanelWindow {
                     }
 
                     Picker { width: parent.width; kind: root.pick; onTouched: root.pin() }
-
-                    // наушники Nothing / CMF (Sys.ear): имя и заряд, под ними шумодав — клетки как у режимов питания
-                    Column {
-                        visible: !!Sys.ear
-                        width: parent.width
-                        spacing: 10
-                        Item {
-                            width: parent.width
-                            height: 20
-                            Lb { x: 6; text: Sys.buds?.name ?? "" }
-                            Lb {
-                                anchors.right: parent.right
-                                rightPadding: 6
-                                text: ["l", "r", "case"].filter(k => Sys.ear?.[k] !== undefined).map(k => `${k} ${Sys.ear[k]}`).join(" · ")
-                                color: Theme.fg
-                            }
-                        }
-                        Rectangle {
-                            id: anc
-                            width: parent.width
-                            height: 54
-                            radius: Theme.corner(27)
-                            color: Theme.s2
-                            readonly property real cell: (width - 12) / Sys.ancModes.length
-                            readonly property int at: Sys.ancModes.findIndex(m => m[0] === Sys.ear?.mode)
-                            Rectangle {
-                                visible: anc.at >= 0
-                                x: 6 + anc.cell * anc.at
-                                y: 6
-                                width: anc.cell
-                                height: parent.height - 12
-                                radius: height / 2
-                                color: Theme.fg
-                                Behavior on x { NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
-                            }
-                            Repeater {
-                                model: Sys.ancModes
-                                Item {
-                                    id: am
-                                    required property var modelData
-                                    required property int index
-                                    x: 6 + anc.cell * index
-                                    width: anc.cell
-                                    height: anc.height
-                                    Lb { anchors.centerIn: parent; text: am.modelData[1]; color: anc.at === am.index ? Theme.ink : Theme.grey }
-                                    TapHandler { onTapped: { root.pin(); Sys.setAnc(am.modelData[0]); } }
-                                    HoverHandler { cursorShape: Qt.PointingHandCursor }
-                                }
-                            }
-                        }
-                    }
 
                     Grid {
                         width: parent.width
@@ -341,8 +290,6 @@ PanelWindow {
                                     visible: status === Image.Ready
                                     source: n.appIcon ? Quickshell.iconPath(n.appIcon, true) : ""
                                     sourceSize: Qt.size(24, 24)
-                                    layer.enabled: true
-                                    layer.effect: Dm { step: 2 }
                                 }
                             }
                             Column {

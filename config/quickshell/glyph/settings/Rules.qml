@@ -5,28 +5,13 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 
-// house rules: ~/.config/demonshot/rules.json — единственный источник правды для настроек.
-// Правка из Settings пишет файл (writeAdapter) и сама зовёт нужный apply. applyAll зовёт только shell.qml на старте:
-// лок (lock.qml) тоже читает Theme → Rules, но ничего не применяет
+// Configurações de hardware e sessão: ~/.config/glyph/rules.json
 Singleton {
     id: root
 
-    readonly property string dir: Quickshell.env("HOME") + "/.config/demonshot"
+    readonly property string dir: Quickshell.env("HOME") + "/.config/glyph"
     readonly property alias store: adapter
 
-    // восемь цветов в порядке Theme: void crypt wine plum rose crimson ash bone
-    readonly property var palettes: [
-        { name: "Demon's Shot", what: "blood & bone", c: ["#0D0B0E", "#151116", "#2B1820", "#4A2236", "#B8487A", "#C7303D", "#7A6870", "#E9DFDD"] },
-        { name: "Absinthe", what: "green fairy", c: ["#0B0D0B", "#121612", "#1E2A1F", "#2F4630", "#A9B85A", "#7CC24A", "#6E7A6C", "#E3E6D8"] },
-        { name: "Nightshade", what: "poison bloom", c: ["#0C0B10", "#131119", "#221A30", "#3A2852", "#8E6BD8", "#B04BD6", "#706A80", "#E4DFEA"] },
-        { name: "Holy Water", what: "cold blessing", c: ["#0A0C10", "#11151B", "#1A2433", "#263C57", "#5E9BD1", "#3F7FE0", "#687687", "#DDE4EA"] },
-        { name: "Rust", what: "old iron", c: ["#0E0B09", "#17120F", "#2E1D14", "#4D2E1C", "#D08A3E", "#D1532A", "#7E6E62", "#EADFD3"] },
-        { name: "Gilded", what: "altar gold", c: ["#0D0C0A", "#16140F", "#2E2716", "#4A3D1E", "#B88A4A", "#D9A43A", "#7A7262", "#EDE5D3"] },
-        { name: "Ghost", what: "no color left", c: ["#0C0C0D", "#141416", "#26262A", "#3A3A40", "#9A9AA6", "#E9E9EE", "#6E6E76", "#E2E2E6"] }
-    ]
-    readonly property var pal: palettes[adapter.palette] ?? palettes[0]
-
-    // ждём файл при создании синглтона: иначе первый, кто прочтёт store (glyph на старте), получит умолчания, а не rules.json
     Component.onCompleted: file.waitForJob()
 
     FileView {
@@ -88,9 +73,6 @@ Singleton {
             property int noteDeck: 5      // сколько видно в колоде
         }
     }
-
-    // kitty: include-файл с цветами палитры (kitty.conf подключает его), SIGUSR1 — перечитать конфиг
-    FileView { id: kitty; path: root.dir + "/kitty.conf"; printErrors: false }
 
     function hypr(lua) { Quickshell.execDetached(["hyprctl", "eval", lua]); }
 
@@ -272,8 +254,8 @@ Singleton {
         idleDone = true;
         const s = store, dpms = a => `hyprctl dispatch 'hl.dsp.dpms({action = "${a}"})'`;
         const at = (min, on, back) => min ? `\nlistener {\n    timeout = ${min * 60}\n    on-timeout = ${on}${back ? `\n    on-resume = ${back}` : ""}\n}\n` : "";
-        const conf = "# demonshot: пишет Rules.idle() из rules.json, руками не править\n"
-            + "general {\n    lock_cmd = ~/.config/quickshell/rice/rice lock\n    inhibit_sleep = 3\n"
+        const conf = "# glyph: gerado por Rules.idle() a partir de rules.json\n"
+            + "general {\n    lock_cmd = ~/.config/quickshell/glyph/rice lock\n    inhibit_sleep = 3\n"
             + `    before_sleep_cmd = loginctl lock-session\n    after_sleep_cmd = ${dpms("on")}\n}\n`
             + at(s.lockAfter, "loginctl lock-session") + at(s.dpmsAfter, dpms("off"), dpms("on"))
             + at(s.sleepAfter, hibernateOn ? "systemctl suspend-then-hibernate" : "systemctl suspend");
@@ -285,29 +267,6 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", store.night ? `pkill -x hyprsunset; exec hyprsunset -t ${store.warmth}` : "pkill -x hyprsunset"]);
     }
 
-    // палитра: Theme перекрашивается сам (биндинги на pal), здесь — то, что живёт вне шелла
-    function paint() {
-        const c = pal.c;
-        if (store.paintHypr) {
-            const h = c.map(x => x.slice(1));
-            hypr(`hl.config({ general = { col = { active_border = { colors = { "rgb(${h[5]})", "rgb(${h[4]})", "rgb(${h[5]})" }, angle = 135 }, `
-               + `inactive_border = "rgb(${h[2]})" } }, decoration = { shadow = { color = "rgba(${h[5]}20)" } } })`);
-        }
-        if (store.paintKitty) {
-            kitty.setText([
-                ["foreground", c[7]], ["background", c[1]], ["cursor", c[7]], ["cursor_text_color", c[1]],
-                ["selection_foreground", c[7]], ["selection_background", c[3]], ["url_color", c[4]],
-                ["active_border_color", c[5]], ["inactive_border_color", c[2]],
-                ["active_tab_foreground", c[7]], ["active_tab_background", c[5]],
-                ["inactive_tab_foreground", c[6]], ["inactive_tab_background", c[1]], ["tab_bar_background", c[0]]
-            ].map(([k, v]) => `${k} ${v}`).join("\n") + "\n");
-            Quickshell.execDetached(["pkill", "-USR1", "-x", "kitty"]);
-        }
-    }
-
-    // режимы питания, как в caelestia: профиль power-profiles-daemon. ultra сверху — 60 Гц, без анимаций, blur и теней,
-    // поверх своих настроек, не трогая их: вышел — вернулись. 0 ultra · 1 saver · 2 balanced · 3 performance.
-    // Окна (blur, тени) применяет вызвавший: demonshot — windows(), glyph — Theme.apply() (windows() снял бы его скругление)
     readonly property var modes: [
         { name: "ultra", short: "ULT", what: `power saver · ${rates[0]} hz · still` },
         { name: "saver", short: "ECO", what: "power saver" },
@@ -334,9 +293,4 @@ Singleton {
     readonly property bool moving: store.motion && !store.ultra && !store.game
     readonly property bool blurOn: store.blur && !store.ultra && !store.game
     readonly property bool shadowOn: store.shadow && !store.ultra && !store.game
-
-    // старт шелла: всё, кроме яркости (её крутят клавиши и OSD, перетирать на каждом запуске нельзя)
-    function applyAll() {
-        monitor(); windows(); motion(); night(); paint(); input(); idle();
-    }
 }

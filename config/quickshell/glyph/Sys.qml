@@ -91,29 +91,6 @@ Singleton {
     function toggleAir() { Quickshell.execDetached(["rfkill", air ? "unblock" : "block", "all"]); air = !air; }
     function toggleMic() { if (mic?.audio) mic.audio.muted = !mic.audio.muted; }
 
-    // ---- наушники Nothing / CMF: шумодав и заряд через ./ear (их RFCOMM-протокол). Спрашиваем при открытии быстрых настроек.
-    // ponytail: узнаём по имени, как Gadgetbridge; не Nothing — ear не ответит, ear останется null ----
-    readonly property var buds: Bluetooth.devices.values.find(d => d.connected && /^(nothing|cmf|ear)\b/i.test(d.name)) ?? null
-    property var ear: null // {mode, l, r, case?}
-    onBudsChanged: ear = null
-    // сразу после подключения канал ещё не готов — спрашивать раз в 2 с, пока не ответят. ponytail: не Nothing с похожим
-    // именем так и будет опрашиваться, пока подключено
-    Timer { interval: 2000; repeat: true; running: !!root.buds && !root.ear; onTriggered: root.earRun([]) }
-    readonly property var ancModes: [[5, "off"], [7, "transp"], [3, "low"], [2, "mid"], [1, "high"], [4, "auto"]]
-    property var earNext: null
-    function earRun(a) {
-        if (!buds) return;
-        const c = [Quickshell.shellPath("ear"), buds.address, ...a];
-        if (earP.running) earNext = c;
-        else { earP.command = c; earP.running = true; }
-    }
-    function setAnc(m) { ear = Object.assign({}, ear, { mode: m }); earRun(["mode", m]); }
-    Process {
-        id: earP
-        stdout: StdioCollector { onStreamFinished: { try { root.ear = JSON.parse(text); } catch (e) { root.ear = null; } } }
-        onExited: if (root.earNext) { command = root.earNext; root.earNext = null; running = true; }
-    }
-
     // ---- Bluetooth сам не переподключает устройства, когда адаптер включили обратно (пилюля, авиарежим, rfkill).
     // BlueZ сначала рвёт соединения и только потом гасит адаптер (Connected:false за 40–90 мс до Powered:false), так что
     // снимок в момент выключения пуст. Поэтому список подключённых пишем с задержкой: выключение её отменяет, и в

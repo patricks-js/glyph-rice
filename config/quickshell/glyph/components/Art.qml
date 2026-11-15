@@ -1,8 +1,9 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import qs
 
-// обложка трека точками в круге; нет обложки — конический градиент из концепта
+// Capa de faixa / miniatura circular limpa; sem capa — gradiente cônico
 Item {
     id: root
 
@@ -10,7 +11,25 @@ Item {
     property real step: 6
 
     layer.enabled: true
-    layer.effect: Dm { step: root.step; circle: true }
+    layer.effect: MultiEffect {
+        maskEnabled: true
+        maskSource: circleMask
+        maskThresholdMin: 0.5
+        maskSpreadAtMin: 1.0
+    }
+
+    Item {
+        id: circleMask
+        width: root.width
+        height: root.height
+        layer.enabled: true
+        visible: false
+        Rectangle {
+            anchors.fill: parent
+            radius: Math.min(width, height) / 2
+            color: "#FFFFFF"
+        }
+    }
 
     Shape {
         anchors.fill: parent

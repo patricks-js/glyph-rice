@@ -21,7 +21,7 @@ PACMAN=(
     brightnessctl playerctl wl-clipboard cliphist grim slurp swappy imagemagick libvips libqalculate
     gpu-screen-recorder ydotool libnotify trash-cli
     # терминал и консоль
-    kitty fish starship fastfetch btop cava eza zoxide direnv
+    kitty fish starship fastfetch btop eza zoxide direnv
     # приложения из variables.lua
     thunar pavucontrol
     # шрифты (cjk — каомодзи в Charms), иконки (Papirus-Dark — основа темы папок Rice), тёмная база для gtk.css
@@ -45,15 +45,13 @@ G=config/quickshell/glyph
 LINKS=(
     "config/hypr                                .config/hypr"
     "$G                                         .config/quickshell/glyph"
-    "config/quickshell/rice                     .config/quickshell/rice"
-    "config/quickshell/rice/rice                .local/bin/rice"
+    "$G/rice                                    .local/bin/rice"
     "config/kitty                               .config/kitty"
     "config/qtengine                            .config/qtengine"
     "$G/term/qtengine.colors                    .config/qtengine.colors"
     "$G/term/starship.toml                      .config/starship.toml"
     "$G/term/fastfetch                          .config/fastfetch"
     "$G/term/btop                               .config/btop"
-    "$G/term/cava                               .config/cava"
     "$G/term/gtk-3.0/gtk.css                    .config/gtk-3.0/gtk.css"
     "$G/term/gtk-4.0/gtk.css                    .config/gtk-4.0/gtk.css"
     "config/fish/config.fish                    .config/fish/config.fish"
@@ -63,7 +61,7 @@ LINKS=(
 
 say() { printf '\e[38;2;215;25;33m●\e[0m %s\n' "$*"; }
 
-extras() { # --with или вопрос → в EXT, ставит yay (и из репо) отдельно от AUR
+extras() { # --with или вопрос → в EXT, ставит paru (и из репо) отдельно от AUR
     local w; EXT=()
     if [ -z "${WITH+x}" ]; then
         say "anything else to install? space-separated, Enter for none"
@@ -86,19 +84,19 @@ packages() {
     # без --noconfirm: на конфликте (pulseaudio → pipewire-pulse) он ответил бы «нет» и уронил установку
     sudo pacman -Syu --needed "${PACMAN[@]}"
 
-    if ! command -v yay >/dev/null; then
-        say "yay"
+    if ! command -v paru >/dev/null; then
+        say "paru"
         local tmp; tmp="$(mktemp -d)"
-        git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$tmp/yay-bin"
-        (cd "$tmp/yay-bin" && makepkg -si --noconfirm)
+        git clone --depth 1 https://aur.archlinux.org/paru-bin.git "$tmp/paru-bin"
+        (cd "$tmp/paru-bin" && makepkg -si --noconfirm)
         rm -rf "$tmp"
     fi
 
     say "aur"
     # AUR необязателен: упал пакет — сервисы и ссылки всё равно ставим
-    yay -S --needed --noconfirm "${AUR[@]}" || say "aur: some packages failed, see above"
+    paru -S --needed --noconfirm "${AUR[@]}" || say "aur: some packages failed, see above"
     # отдельно: не собрался spicetify — ядро AUR от этого не страдает
-    [ ${#EXT[@]} -eq 0 ] || yay -S --needed --noconfirm "${EXT[@]}" || say "extras: some packages failed, see above"
+    [ ${#EXT[@]} -eq 0 ] || paru -S --needed --noconfirm "${EXT[@]}" || say "extras: some packages failed, see above"
 }
 
 services() {
@@ -125,9 +123,8 @@ links() {
         ln -s "$src" "$dst"
         echo "  $dst"
     done
-    # rules.json и kitty.conf шелл создаст сам; rice поднимет glyph и соберёт тему папок
-    mkdir -p "$HOME/.config/demonshot" "${XDG_STATE_HOME:-$HOME/.local/state}/rice"
-    echo glyph > "${XDG_STATE_HOME:-$HOME/.local/state}/rice/shell"
+    # rules.json, glyph.json e kitty.conf o shell cria em ~/.config/glyph; rice monta tema de pastas
+    mkdir -p "$HOME/.config/glyph"
     mkdir -p "$HOME/Pictures/Wallpapers" # пикер обоев (Super+Shift+W) смотрит сюда
     fc-cache -f >/dev/null
     command -v gsettings >/dev/null || return 0 # --links на системе без GNOME-схем

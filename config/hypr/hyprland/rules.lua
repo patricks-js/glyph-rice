@@ -127,9 +127,6 @@ hl.layer_rule({ match = { namespace = "selection" }, animation = "fade" })      
 hl.layer_rule({ match = { namespace = "wayfreeze" }, animation = "fade" })                  -- wayfreeze
 hl.layer_rule({ match = { namespace = "launcher" }, animation = "popin 80%", blur = true }) -- Fuzzel
 
--- Shell: все окна demonshot анимируют себя сами (slam), компоновщик не мешает
-hl.layer_rule({ match = { namespace = "demonshot-.*" }, no_anim = true })
--- glyph: полосы-OSD, остров, быстрые настройки и свои модули рисуют появление сами — компоновщик не мешает (и не тормозит OSD);
--- меню питания своей анимации нет — мягкий fade
+-- Shell: módulos animam a própria abertura; menu de energia tem fade suave
 hl.layer_rule({ match = { namespace = "glyph-power" }, animation = "fade" })
-hl.layer_rule({ match = { namespace = "glyph-(launcher|edge|island|buds|quick|home|bar|caffeine|shot|clip|charms|vpn|deck|prefs|hot|cal|wall|back)" }, no_anim = true })
+hl.layer_rule({ match = { namespace = "glyph-(launcher|edge|island|quick|home|bar|caffeine|shot|clip|vpn|deck|prefs|hot|cal|wall|back)" }, no_anim = true })

@@ -1,12 +1,9 @@
-local scheme = require("scheme.demonshot")
+local scheme = require("scheme.glyph")
 local home   = os.getenv("HOME")
 
--- DEMONSHOT_NESTED=1 Hyprland -c …/rice/config/hypr/hyprland.lua — вложенная сессия для отладки:
--- системные демоны уже работают снаружи
-local nested = os.getenv("DEMONSHOT_NESTED") ~= nil
--- какой шелл живой (demonshot, glyph…), решает rice: `rice switch <имя>` или приложение Rice.
--- Путь полный: ~/.local/bin в PATH у hypr нет
-local rice   = home .. "/.config/quickshell/rice/rice"
+-- GLYPH_NESTED=1 Hyprland -c …/config/hypr/hyprland.lua — sessão aninhada para debug
+local nested = os.getenv("GLYPH_NESTED") ~= nil
+local rice   = home .. "/.config/quickshell/glyph/rice"
 
 return {
     ------------------
@@ -50,11 +47,10 @@ return {
     blurXray                   = false,
 
     -- Shadow
-    -- лёгкое красное свечение у фокуса
     shadowEnabled              = true,
     shadowRange                = 10,
     shadowRenderPower          = 4,
-    shadowColour               = "rgba(" .. scheme.crimson .. "20)",
+    shadowColour               = "rgba(" .. scheme.fg .. "1A)",
 
     -- Gaps
     workspaceGaps              = 15,
@@ -63,13 +59,10 @@ return {
 
     -- Window styling
     windowOpacity              = 1,
-    windowRounding             = 0,
+    windowRounding             = 20,
     windowBorderSize           = 2,
-    activeWindowBorderColour   = {
-        colors = { "rgb(" .. scheme.crimson .. ")", "rgb(" .. scheme.rose .. ")", "rgb(" .. scheme.crimson .. ")" },
-        angle = 135,
-    },
-    inactiveWindowBorderColour = "rgb(" .. scheme.wine .. ")",
+    activeWindowBorderColour   = "rgb(" .. scheme.fg .. ")",
+    inactiveWindowBorderColour = "rgb(" .. scheme.s3 .. ")",
 
     -- Misc
     volumeStep                 = 5,

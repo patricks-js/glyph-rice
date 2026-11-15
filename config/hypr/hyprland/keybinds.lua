@@ -188,7 +188,6 @@ hl.bind("SUPER + SHIFT + L", hl.dsp.exec_cmd(vars.sleepGestureCmd), { locked = t
 
 -- Clipboard
 hl.bind("SUPER + V", hl.dsp.global("shell:clip"))
-hl.bind("SUPER + Period", hl.dsp.global("shell:charms"))
 hl.bind(
     "CTRL + SHIFT + ALT + V",
     hl.dsp.exec_cmd('sleep 0.5s && ydotool type -d 1 "$(cliphist list | head -1 | cliphist decode)"')

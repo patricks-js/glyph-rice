@@ -160,23 +160,8 @@ PanelWindow {
             }
         }
     }
-    readonly property var parts: ({ layout: layoutC, wifi: wifiC, bluetooth: btC, sound: soundC, notes: notesC, battery: batC, mode: modeC, power: powerC, cat: catC })
+    readonly property var parts: ({ layout: layoutC, wifi: wifiC, bluetooth: btC, sound: soundC, notes: notesC, battery: batC, mode: modeC, power: powerC })
     Component { id: layoutC; Lb { text: Sys.layout; px: 10 } }
-    // кот RunCat: чем больше cpu, тем быстрее бежит (250 мс на кадр в простое, 50 на полной). cpu опрашивается, пока он в трее;
-    // Binding не в делегате — уничтоженный значение не возвращает. Серый как есть, в светлой теме на белом теряется — чёрный, как buds
-    Component {
-        id: catC
-        AnimatedImage {
-            width: 44
-            height: 26
-            source: "runcat.gif"
-            mipmap: true
-            speed: 1 + 4 * SysStats.cpu
-            layer.enabled: Theme.light
-            layer.effect: MultiEffect { brightness: -1 }
-        }
-    }
-    Binding { target: SysStats; property: "cat"; value: Theme.state.bar.includes("cat") }
     // сеть: две дуги и точка, концы круглые, как у батареи; выключен — косая черта
     Component {
         id: wifiC

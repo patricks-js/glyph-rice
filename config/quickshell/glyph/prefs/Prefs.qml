@@ -29,13 +29,12 @@ PanelWindow {
     // глифы видов дома, секций deck и трея бара
     readonly property var icons: ({
         weather: "\u{F0595}", calendar: "\u{F00ED}", cpu: "\u{F061A}", ram: "\u{F035B}", gpu: "\u{F08AE}", disk: "\u{F02CA}",
-        battery: "\u{F0079}", buds: "\u{F02CB}", player: "\u{F040A}", system: "\u{F0128}", cat: "\u{F011B}", cava: "\u{F0EA2}",
+        battery: "\u{F0079}", player: "\u{F040A}", system: "\u{F0128}",
         clock: "\u{F0150}", perf: "\u{F04C5}", net: "\u{F05A9}", media: "\u{F075A}",
         layout: "\u{F030C}", wifi: "\u{F05A9}", bluetooth: "\u{F00AF}", sound: "\u{F057E}", notes: "\u{F009A}",
         mode: "\u{F04C5}", power: "\u{F0425}"
     })
-    // круглые виджеты дома, остальные — квадрат 40. ponytail: ram/gpu/disk/battery — догадка (кольца); решит Home — поправить
-    readonly property var rounds: ["weather", "cpu", "ram", "gpu", "disk", "battery", "buds", "cava"]
+    readonly property var rounds: ["cpu", "ram", "gpu", "disk", "battery"]
 
     // ---- открытие: сам себе анимация (у слоёв glyph в hypr no_anim). Раздел помнится между открытиями ----
     property bool shown: false
@@ -129,17 +128,6 @@ PanelWindow {
     SystemClock { id: clock; enabled: root.visible; precision: SystemClock.Minutes }
     readonly property string hello: { const h = clock.date.getHours(); return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; }
     readonly property string who: (Theme.state.name || Quickshell.env("USER")).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-
-    // имя и подпись текущего шелла — из его rice.json (тот же, что рисует приложение Rice)
-    property var meta: ({})
-    FileView { path: Quickshell.shellPath("rice.json"); onLoaded: try { root.meta = JSON.parse(text()); } catch (e) {} }
-    // «switch shell» — только когда есть из чего выбирать: другие шеллы, папки с rice.json рядом (Demon's Shot…)
-    property int shells: 1
-    Process {
-        running: root.visible
-        command: [Quickshell.env("HOME") + "/.config/quickshell/rice/rice", "list"]
-        stdout: StdioCollector { onStreamFinished: root.shells = text.trim().split("\n").length }
-    }
 
     visible: t > 0
     anchors { left: true; right: true; top: true; bottom: true }
@@ -288,59 +276,6 @@ PanelWindow {
                         width: parent.width
                         elide: Text.ElideRight
                         text: !home.cur_ ? "empty · ↵ adds one" : `${home.cur_.id} · ${home.cur_.span} cell${home.cur_.span > 1 ? "s" : ""}${home.cur_.fits ? "" : " · off grid"}`
-                    }
-                    // гифка кота (services/Gifs) — пока выбран кот. Клик или ←→ в фокусе
-                    Column {
-                        id: gifPick
-                        visible: home.cur_?.id === "cat"
-                        topPadding: 28
-                        spacing: 12
-                        Lb {
-                            width: 404
-                            elide: Text.ElideRight
-                            text: `gif · ${Gifs.name(Gifs.cur)} · ${Gifs.sel + 1} of ${Gifs.list.length}`
-                            color: gifStrip.activeFocus ? Theme.fg : Theme.grey
-                        }
-                        ListView {
-                            id: gifStrip
-                            width: 404
-                            height: 58
-                            orientation: ListView.Horizontal
-                            spacing: (width - 6 * 58) / 5 // ровно шесть в ряд
-                            clip: true
-                            snapMode: ListView.SnapToItem
-                            boundsBehavior: Flickable.StopAtBounds
-                            keyNavigationEnabled: false
-                            activeFocusOnTab: true
-                            model: Gifs.list
-                            currentIndex: Gifs.sel
-                            onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
-                            Keys.onPressed: e => {
-                                if (e.key === Qt.Key_Left) Gifs.step(-1);
-                                else if (e.key === Qt.Key_Right) Gifs.step(1);
-                                else return;
-                                e.accepted = true;
-                            }
-                            delegate: Rectangle {
-                                id: th
-                                required property string modelData
-                                required property int index
-                                readonly property bool on: index === Gifs.sel
-                                width: 58
-                                height: 58
-                                radius: Theme.corner(width * 0.18)
-                                color: Theme.s1
-                                border { width: on ? 2 : 1; color: on ? Theme.fg : Theme.s2 }
-                                GifDots { anchors { fill: parent; margins: 6 } path: th.modelData; bg: th.color; playing: gifPick.visible && root.visible }
-                                TapHandler {
-                                    onTapped: {
-                                        Gifs.pick(th.modelData);
-                                        gifStrip.forceActiveFocus();
-                                    }
-                                }
-                                HoverHandler { cursorShape: Qt.PointingHandCursor }
-                            }
-                        }
                     }
                     Item { width: 1; height: 40 }
                     Lb { text: home.off.length ? `off grid · ${home.off.length}` : "everything fits" }
@@ -755,20 +690,14 @@ PanelWindow {
             }
         }
 
-        // ---- STYLE: откуда цвет и куда он ложится. Сверху — рабочий стол в палитре образца под курсором или в фокусе (нет
-        // такого — в нынешней): бар, быстрые настройки, kitty, плеер, полоса Glyph; справа от него — роли выносками, как на
-        // чертеже: какой цвет где. Под ним откуда цвет и тема; дальше — что у источника: обои точками (клик — пикер), их тона
-        // и варианты (кольцо — сколько цвета) или палитры по группам. Выбор тот же, что style в лаунчере (Theme.styles).
-        // Образцы по индексу: новый Theme.styles на каждый выбор не пересоздаёт кружки, и фокус остаётся где был ----
+        // ---- STYLE: seleção de paleta modular e modo dark/light ----
         Page {
             id: tint
             k: 4
-            property Item hot: null // образец под курсором или в фокусе
+            property Item hot: null
             readonly property var p: hot?.item.pal ?? Theme.pal
-            readonly property string src: Theme.state.paint === "scheme" ? (Theme.pal.group === "more" ? "" : Theme.pal.group + " ") + Theme.pal.name
-                : Theme.state.paint === "wall" && Theme.tones.length ? `wallpaper · ${Theme.pal.name}` : "nothing"
+            readonly property string src: (Theme.pal.group === "more" || Theme.pal.group === "default" ? "" : Theme.pal.group + " ") + Theme.pal.name
             caption: `style · ${src} · ${Theme.light ? "light" : "dark"}` + (hot && !hot.item.now ? `   →   ${hot.item.name} · ↵ sets it` : "")
-            function block(h) { return Theme.styles.find(b => b.head === h)?.items ?? []; }
             function peek(sw) {
                 if (sw.peek) hot = sw;
                 else if (hot === sw) hot = null;
@@ -778,92 +707,28 @@ PanelWindow {
 
             Row {
                 spacing: 24
-                Pick {
-                    label: "from"
-                    opts: ["nothing", "wall", "palette"]
-                    cur: ["", "wall", "scheme"].indexOf(Theme.state.paint)
-                    onPicked: i => Theme.state.paint = ["", "wall", "scheme"][i]
-                }
                 Pick { label: "theme"; opts: ["dark", "light"]; cur: Theme.light ? 1 : 0; onPicked: i => Theme.setLight(i === 1) }
             }
 
-            // что у источника. Высота одна на все: Page по центру, и макет не прыгал бы при смене источника. ponytail: 300 — на
-            // глаз, палитры в два ряда; вырастет — Item растёт за ним
             Item {
                 width: 1040
                 height: Math.max(300, own.height)
-                Column {
+                Flow {
                     id: own
-                    spacing: 28
-                    Lb { visible: !Theme.state.paint; text: "black · white dots · one red — nothing to pick"; color: Theme.mute }
-                    Row {
-                        visible: Theme.state.paint === "wall"
-                        spacing: 34
-                        // обои точками; клик — пикер
-                        Rectangle {
-                            width: 168
-                            height: 105
-                            radius: Theme.corner(14)
-                            color: "transparent"
-                            border { width: Theme.wall ? 0 : 1; color: Theme.s3 }
-                            Image {
-                                anchors.fill: parent
-                                source: visible ? Theme.url(Theme.wallSrc(Theme.wall)) : "" // не видно — без текстуры
-                                fillMode: Image.PreserveAspectCrop
-                                sourceSize: Qt.size(336, 210)
-                                asynchronous: true
-                                layer.enabled: true
-                                layer.effect: Dm { step: 4 }
-                            }
-                            Lb { visible: !Theme.wall; anchors.centerIn: parent; px: 10; text: "no wallpaper" }
-                            TapHandler {
-                                onTapped: {
-                                    root.close();
-                                    root.wallRequested();
-                                }
-                            }
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
-                        }
+                    width: 1040
+                    spacing: 40
+                    Repeater {
+                        model: Math.max(0, Theme.styles.length - 1)
                         Column {
+                            id: sb
+                            required property int index
+                            readonly property var block: Theme.styles[index] ?? ({ head: "", items: [] })
                             spacing: 6
-                            Lb { text: Theme.tones.length ? "tones · from the wallpaper" : "no colour in it · click it for another" }
+                            Lb { text: sb.block.head }
                             Row {
                                 Repeater {
-                                    model: tint.block("tones").length
-                                    Swatch { id: tw; item: tint.block("tones")[index] ?? ({ name: "" }); onPeekChanged: tint.peek(tw) }
-                                }
-                            }
-                        }
-                    }
-                    Column {
-                        visible: Theme.state.paint === "wall" && Theme.tones.length > 0
-                        spacing: 6
-                        Lb { text: "variant · how much colour, like material you" }
-                        Row {
-                            Repeater {
-                                model: tint.block("variant").length
-                                Swatch { id: vw; item: tint.block("variant")[index] ?? ({ name: "" }); onPeekChanged: tint.peek(vw) }
-                            }
-                        }
-                    }
-                    // палитры по группам — блоки между source и theme
-                    Flow {
-                        visible: Theme.state.paint === "scheme"
-                        width: 1040
-                        spacing: 40
-                        Repeater {
-                            model: Theme.state.paint === "scheme" ? Theme.styles.length - 2 : 0
-                            Column {
-                                id: sb
-                                required property int index
-                                readonly property var block: Theme.styles[index + 1] ?? ({ head: "", items: [] })
-                                spacing: 6
-                                Lb { text: sb.block.head }
-                                Row {
-                                    Repeater {
-                                        model: sb.block.items.length
-                                        Swatch { id: pw; item: sb.block.items[index] ?? ({ name: "" }); onPeekChanged: tint.peek(pw) }
-                                    }
+                                    model: sb.block.items.length
+                                    Swatch { id: pw; item: sb.block.items[index] ?? ({ name: "" }); onPeekChanged: tint.peek(pw) }
                                 }
                             }
                         }
@@ -1245,7 +1110,7 @@ PanelWindow {
             }
         }
 
-        // ---- SHELL: знак райса и имя живого шелла; переключатель — приложение Rice ----
+        // ---- SHELL: informações do shell ativo ----
         Page {
             k: 11
             caption: "shell · quickshell"
@@ -1262,21 +1127,11 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 18
                     Lb { text: "running now" }
-                    Num { text: root.meta.name ?? "GLYPH"; font.pixelSize: 140 }
-                    Lb { text: root.meta.tagline ?? "" }
+                    Num { text: "GLYPH"; font.pixelSize: 140 }
                 }
             }
             Row {
                 spacing: 20
-                Act {
-                    visible: root.shells > 1
-                    icon: "\u{F04E1}"
-                    text: "switch shell"
-                    onHit: {
-                        root.close();
-                        Quickshell.execDetached(["qs", "-c", "rice"]);
-                    }
-                }
                 Act { icon: "\u{F0450}"; text: "reload"; onHit: Quickshell.reload(false) }
                 Toggle { text: "do not disturb"; on: Theme.state.dnd; onFlip: Theme.state.dnd = !Theme.state.dnd }
             }
@@ -1376,8 +1231,6 @@ PanelWindow {
                 text: root.icons[tile.modelData.id] ?? "?"
                 font.pixelSize: tile.cell * 0.26
                 color: tile.hot ? Theme.ink : tile.modelData.fits ? Theme.fg : Theme.grey
-                layer.enabled: true
-                layer.effect: Dm { step: 3 }
             }
             Lb { visible: tile.cell > 100; anchors.horizontalCenter: parent.horizontalCenter; text: tile.modelData.id; px: 10; color: tile.hot ? Theme.ink : Theme.grey }
         }

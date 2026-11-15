@@ -217,7 +217,7 @@ PanelWindow {
                     Text {
                         visible: !input.text
                         x: 6
-                        text: ["Search apps", "Color from nothing, the wallpaper or a palette", "Find a window", "2 + 2, 20 usd to eur…"][root.mode]
+                        text: ["Search apps", "Choose a palette or theme", "Find a window", "2 + 2, 20 usd to eur…"][root.mode]
                         font: input.font
                         color: Theme.mute
                     }
@@ -388,9 +388,7 @@ PanelWindow {
                 source: cell.near ? cell.modelData.src ?? "" : ""
                 sourceSize: Qt.size(44, 44)
                 asynchronous: true
-                retainWhileLoading: true // ячейке сменили приложение — старая иконка, пока грузится новая
-                layer.enabled: cell.near // слой рисует свой Image и скрытым
-                layer.effect: Dm { step: 2.5 }
+                retainWhileLoading: true
             }
             TapHandler { onTapped: { root.sel = cell.modelData.k; root.launch(); } }
             HoverHandler { cursorShape: Qt.PointingHandCursor }

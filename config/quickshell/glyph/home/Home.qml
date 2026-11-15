@@ -27,7 +27,6 @@ PanelWindow {
     // ponytail: cava — если стоит в списке, даже не влезшей в 3 × 3
     readonly property var homes: Quickshell.screens.filter(s => Theme.scr(s.name, "home") && idle(s))
     Binding { target: SysStats; property: "detailed"; value: root.homes.length > 0 || Sys.deckOpen }
-    Binding { target: Cava; property: "active"; value: root.homes.some(s => Theme.scr(s.name, "widgets").includes("cava")) }
 
     SystemClock { id: clock; precision: SystemClock.Minutes }
     readonly property var en: Qt.locale("en_US")
@@ -37,7 +36,6 @@ PanelWindow {
     Timer { running: root.home && Theme.state.blink; interval: 500; repeat: true; onTriggered: root.dim = !root.dim }
 
     readonly property var player: Media.player
-    readonly property var buds: Bluetooth.devices.values.find(d => d.connected && d.batteryAvailable) ?? null
     property var hist: [] // cpu за минуту: 34 столбца матрицы
     Connections {
         target: SysStats
@@ -84,7 +82,6 @@ PanelWindow {
             spacing: 28
             Meta { icon: "\u{F009A}"; text: `${Notes.list.length} notifications` }
             Meta { visible: Weather.ok; icon: Weather.glyph(Weather.now?.code ?? 0, Weather.now?.day); text: `${Math.round(Weather.now?.temp ?? 0)}° ${Weather.name(Weather.now?.code)}` }
-            Meta { visible: !!root.buds; icon: "\u{F02CB}"; text: `${root.buds?.name ?? ""} · ${Math.round((root.buds?.battery ?? 0) * 100)}%` }
         }
 
         // бенто: ячейки 220, зазор 20, сетка 3×3, правый край — в 80 от края экрана (на 1920 — с 1140, на широком — правее).
@@ -110,46 +107,21 @@ PanelWindow {
                 required property var modelData
                 x: stage.width - 780 + modelData.x
                 y: modelData.y
-                sourceComponent: ({ weather: weatherW, calendar: calendarW, cpu: cpuW, ram: ramW, gpu: gpuW, disk: diskW,
-                                    battery: batteryW, buds: budsW, player: playerW, system: systemW, cat: catW, cava: cavaW })[modelData.id] ?? null
+                sourceComponent: ({ calendar: calendarW, cpu: cpuW, ram: ramW, gpu: gpuW, disk: diskW,
+                                    battery: batteryW, player: playerW, system: systemW })[modelData.id] ?? null
             }
         }
 
-        // погода
-        Component {
-            id: weatherW
-            W {
-                round: true
-                Column {
-                    anchors.centerIn: parent
-                    Icon {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: Weather.glyph(Weather.now?.code ?? 3, Weather.now?.day)
-                        font.pixelSize: 78
-                        layer.enabled: true
-                        layer.effect: Dm { step: 4 }
-                    }
-                    Num { anchors.horizontalCenter: parent.horizontalCenter; topPadding: lead + 6; text: Weather.ok ? Math.round(Weather.now.temp) + "°" : "--"; font.pixelSize: 66 }
-                    Lb {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        topPadding: 8
-                        width: Math.min(implicitWidth, 160) // хорда круга на этой высоте
-                        elide: Text.ElideRight
-                        text: Weather.ok ? `${Weather.name(Weather.now.code)} · ${Math.round(Weather.days[0]?.min)}°/${Math.round(Weather.days[0]?.max)}°` : "no sky"
-                    }
-                }
-            }
-        }
-
-        // календарь
+        // календарь (2 колонки)
         Component {
             id: calendarW
             W {
+                span: 2
                 Column {
-                    x: 24
+                    x: 28
                     y: 24
-                    width: parent.width - 48
-                    Lb { text: root.en.monthName(clock.date.getMonth()) }
+                    width: parent.width - 56
+                    Lb { text: `${root.en.monthName(clock.date.getMonth())} · ${root.en.dayName(clock.date.getDay())}` }
                     Num { topPadding: lead + 8; text: clock.date.getDate(); font.pixelSize: 118 }
                     Row {
                         width: parent.width
@@ -228,68 +200,6 @@ PanelWindow {
                     Seg { width: parent.width; height: 6; n: 24; f: root.player?.lengthSupported && root.player.length > 0 ? Media.position / root.player.length : 0 } // firefox длину не шлёт
                     Item { width: 1; height: 16 }
                     Controls { size: 22; play: 52 }
-                }
-            }
-        }
-
-        // наушники кольцом; нет их — громкость
-        Component {
-            id: budsW
-            W {
-                round: true
-                Notch { onNotch: d => Sys.setVol(Sys.vol + d * 0.05) } // колесо — громкость, и при наушниках: их заряд колесом не крутят
-                Ring { anchors { fill: parent; margins: 12 } f: root.buds ? root.buds.battery : Sys.vol }
-                Column {
-                    anchors.centerIn: parent
-                    Icon { anchors.horizontalCenter: parent.horizontalCenter; text: root.buds ? "\u{F02CB}" : "\u{F057E}"; font.pixelSize: 30 }
-                    Num { anchors.horizontalCenter: parent.horizontalCenter; topPadding: lead + 8; text: Math.round((root.buds ? root.buds.battery : Sys.vol) * 100); font.pixelSize: 54 }
-                    Lb {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        topPadding: 6
-                        width: 130
-                        horizontalAlignment: Text.AlignHCenter
-                        elide: Text.ElideRight
-                        text: root.buds?.name ?? "volume"
-                    }
-                }
-            }
-        }
-
-        // кот: гифка матрицей в тон темы через шейдер обоев (как Wall в look 0), какая — services/Gifs, сама плитка — Gif.
-        // Танцует, только пока дом виден
-        Component {
-            id: catW
-            W {
-                id: cw
-                Gif { anchors.fill: parent; playing: root.home; bg: cw.color }
-            }
-        }
-
-        // cava матрицей в круге, как Glyph Matrix на спинке Nothing Phone (3): бас в центре, к краям верхи, столбики растут
-        // от середины вверх и вниз. Тишина — погасшие точки. cava работает, только пока дом виден
-        Component {
-            id: cavaW
-            W {
-                round: true
-                Grid {
-                    anchors.centerIn: parent
-                    columns: 15
-                    spacing: 4
-                    Repeater {
-                        model: 15 * 15
-                        Rectangle {
-                            required property int index
-                            readonly property int cx: index % 15 - 7
-                            readonly property int cy: Math.floor(index / 15) - 7
-                            readonly property int half: Math.floor(Math.sqrt(7.5 * 7.5 - cx * cx)) // полвысоты столбца внутри круга
-                            readonly property real v: Cava.bars[Math.abs(cx)] ?? 0
-                            width: 8
-                            height: 8
-                            radius: 4
-                            // вне круга — прозрачная, не visible: Grid сдвинул бы остальные
-                            color: Math.abs(cy) > half ? "transparent" : Math.abs(cy) < v * (half + 1) ? Theme.fg : Theme.s3
-                        }
-                    }
                 }
             }
         }

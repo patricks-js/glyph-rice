@@ -1,0 +1,68 @@
+#!/bin/sh
+# rice — gerenciador do shell quickshell (start, restart, kill, lock).
+#   rice start          inicia o shell (chamado pelo hypr no início)
+#   rice restart|kill   reinicia (e recarrega o hypr) / encerra o shell
+#   rice lock           tela de bloqueio do shell (bind, hypridle, menu de energia)
+q=$HOME/.config/quickshell/glyph
+
+term() {
+    for f in starship.toml fastfetch btop gtk-3.0/gtk.css gtk-4.0/gtk.css qtengine.colors; do
+        [ -e "$q/term/$f" ] || continue
+        [ -L "$HOME/.config/$f" ] || [ ! -e "$HOME/.config/$f" ] || continue
+        ln -sfn "$q/term/$f" "$HOME/.config/$f"
+    done
+    pkill -USR2 -x btop 2>/dev/null || true
+    folders
+    g=org.gnome.desktop.interface
+    t=$(gsettings get $g gtk-theme)
+    gsettings set $g gtk-theme Adwaita; gsettings set $g gtk-theme "$t"
+    gsettings set $g icon-theme Papirus-Dark; gsettings set $g icon-theme Rice
+}
+
+folders() {
+    c=$(cat "$q/term/folders" 2>/dev/null) || return 0
+    d=${XDG_DATA_HOME:-$HOME/.local/share}/icons/Rice
+    p=/usr/share/icons/Papirus-Dark
+    [ "$(cat "$d/color" 2>/dev/null)" = "$c" ] && return 0
+    rm -rf "$d"
+    dirs=; secs=
+    for s in 22x22 24x24 32x32 48x48 64x64; do
+        mkdir -p "$d/$s/places"
+        for f in "$p/$s/places/folder-$c"*.svg "$p/$s/places/user-$c"*.svg; do
+            [ -e "$f" ] || continue
+            n=${f##*/}
+            ln -s "$f" "$d/$s/places/${n%%-"$c"*}${n#*-"$c"}"
+        done
+        dirs=$dirs${dirs:+,}$s/places
+        secs="$secs
+[$s/places]
+Context=Places
+Size=${s%x*}
+Type=Fixed
+"
+    done
+    printf '[Icon Theme]\nName=Rice\nComment=Papirus-Dark, folders in %s (rice)\nInherits=Papirus-Dark,breeze-dark,hicolor\nDirectories=%s\n%s' "$c" "$dirs" "$secs" > "$d/index.theme"
+    echo "$c" > "$d/color"
+}
+
+pids() { qs list --all 2>/dev/null | awk -v p="$q/shell.qml" '$1 == "Process" { pid = $3 } $1 == "Config" && $3 == p { print pid }'; }
+stop() {
+    pids=$(pids)
+    [ -n "$pids" ] || return 0
+    kill $pids 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        alive=
+        for p in $pids; do kill -0 "$p" 2>/dev/null && alive=1; done
+        [ -n "$alive" ] || return 0
+        sleep 0.2
+    done
+    kill -9 $pids 2>/dev/null
+}
+
+case ${1:-} in
+    ""|start) [ -n "$(pids)" ] && exit 0; term; exec qs -p "$q" -d ;;
+    restart) term; stop; hyprctl reload >/dev/null; exec qs -p "$q" -d ;;
+    kill) stop ;;
+    lock) pgrep -f '^qs .*/lock[.]qml' >/dev/null || exec qs -p "$q/lock.qml" ;;
+    *) sed -n '2,5s/^# //p' "$0"; exit 1 ;;
+esac

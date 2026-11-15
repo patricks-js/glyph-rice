@@ -15,8 +15,7 @@ PanelWindow {
         code: "\u{F0169}", text: "\u{F09A8}", link: "\u{F0337}", image: "\u{F02E9}", color: "\u{F03D8}", file: "\u{F0214}"
     })
     readonly property var filters: ["all", "text", "links", "images"]
-    // ponytail: кэш картинок общий с demonshot — те же файлы в XDG_RUNTIME_DIR, чистится с выходом из сессии
-    readonly property string cache: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/demonshot-clip-"
+    readonly property string cache: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/glyph-clip-"
 
     property var entries: [] // { id, text, type }
     property var held: []
@@ -415,8 +414,6 @@ PanelWindow {
                 fillMode: Image.PreserveAspectFit
                 horizontalAlignment: Image.AlignLeft
                 asynchronous: true
-                layer.enabled: true
-                layer.effect: Dm { step: 3 }
             }
             Row {
                 id: dims

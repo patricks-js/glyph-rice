@@ -16,7 +16,7 @@ PanelWindow {
     id: root
 
     readonly property string dir: Theme.state.wallDir || Quickshell.env("HOME") + "/Pictures/Wallpapers"
-    readonly property var looks: ["dots", "mono", "color"]
+    readonly property var looks: ["mono", "color"]
     // копии — в физических пикселях экрана, с запасом под обрезку
     readonly property string res: {
         const s = Quickshell.screens[0];
@@ -29,7 +29,7 @@ PanelWindow {
     // выбранное — путём, номер — от него: пока кэш дописывается, новые встают в середину и лента не съезжает
     property string pick: ""
     readonly property int sel: Math.max(0, list.indexOf(pick))
-    property int look: 0
+    property int look: 2
     property int pitch: 10
     property int bright: 85
 
@@ -73,7 +73,7 @@ PanelWindow {
         own = Quickshell.screens.length > 1 && Theme.own(mon)?.wall !== undefined;
         pick = Theme.scr(mon, "wall");
         view = pick;
-        look = s.wallLook;
+        look = s.wallLook < 1 ? 2 : s.wallLook;
         pitch = s.wallPitch;
         bright = s.wallBright;
         if (!scan.running) {
@@ -140,10 +140,8 @@ magick "$1[0]" -resize "$3" -quality 90 "$2/.$b.jpg" 2>/dev/null && mv "$2/.$b.j
             if (e.key === Qt.Key_Left || e.key === Qt.Key_H) root.go(-1);
             else if (e.key === Qt.Key_Right || e.key === Qt.Key_L) root.go(1);
             else if (e.key === Qt.Key_Home) root.pick = "";
-            else if (e.key === Qt.Key_Tab) root.look = (root.look + 1) % 3;
-            else if (e.key === Qt.Key_Backtab) root.look = (root.look + 2) % 3;
-            else if ((up || down) && e.modifiers & Qt.ShiftModifier) root.bright = Math.max(10, Math.min(100, root.bright + (up ? 5 : -5)));
-            else if (up || down) root.pitch = Math.max(4, Math.min(32, root.pitch + (up ? 1 : -1)));
+            else if (e.key === Qt.Key_Tab || e.key === Qt.Key_Backtab) root.look = root.look === 2 ? 1 : 2;
+            else if (up || down) root.bright = Math.max(10, Math.min(100, root.bright + (up ? 5 : -5)));
             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) root.apply();
             else if (e.key === Qt.Key_Escape) root.close();
             else return;
@@ -226,11 +224,10 @@ magick "$1[0]" -resize "$3" -quality 90 "$2/.$b.jpg" 2>/dev/null && mv "$2/.$b.j
             y: 110
             spacing: 30
             Pick { visible: Quickshell.screens.length > 1; anchors.right: parent.right; label: "for"; opts: ["all", root.mon.toLowerCase()]; cur: root.own ? 1 : 0; onPicked: i => root.own = i === 1 }
-            Pick { label: "look"; opts: root.looks; cur: root.look; onPicked: i => root.look = i }
+            Pick { label: "look"; opts: root.looks; cur: root.look - 1; onPicked: i => root.look = i + 1 }
             Row {
                 anchors.right: parent.right
                 spacing: 36
-                Dial { size: 120; label: "dot · px"; from: 4; to: 32; live: true; value: root.pitch; onMoved: v => root.pitch = v }
                 Dial { size: 120; label: "light · %"; from: 10; to: 100; step: 5; live: true; value: root.bright; onMoved: v => root.bright = v }
             }
         }
@@ -298,8 +295,7 @@ magick "$1[0]" -resize "$3" -quality 90 "$2/.$b.jpg" 2>/dev/null && mv "$2/.$b.j
             spacing: 34
             Lb { text: "←→ browse" }
             Lb { text: "tab look" }
-            Lb { text: "↑↓ dot size" }
-            Lb { text: "shift ↑↓ light" }
+            Lb { text: "↑↓ light" }
             Lb { text: "↵ set" }
             Lb { text: "esc back"; TapHandler { onTapped: root.close() } }
         }
