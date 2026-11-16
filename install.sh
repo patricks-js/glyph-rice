@@ -21,8 +21,9 @@ PACMAN=(
     gpu-screen-recorder ydotool libnotify trash-cli
     # terminal e console
     kitty fish starship fastfetch btop lsd zoxide direnv
-    # apps padrão
+    # apps padrão e utilitários
     nautilus pavucontrol
+    discord distrobox obs-studio v4l2loopback-dkms obsidian zed
     # fontes, ícones e base GTK
     ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme adw-gtk-theme
 )
@@ -30,6 +31,7 @@ PACMAN=(
 AUR=(
     qtengine darkly-bin bibata-cursor-theme-bin
     zen-browser-bin gearlever
+    1password beekeeper-studio-bin bruno-bin
 )
 
 G=config/quickshell/glyph
@@ -85,6 +87,12 @@ services() {
     systemctl --user enable pipewire-pulse.socket wireplumber ydotool
     sudo usermod -aG input,video "$USER"
     xdg-user-dirs-update
+    if command -v 1password >/dev/null; then
+        sudo mkdir -p /etc/1password
+        printf 'zen\nzen-bin\n' | sudo tee /etc/1password/custom_allowed_browsers >/dev/null
+        sudo chown root:root /etc/1password/custom_allowed_browsers
+        sudo chmod 755 /etc/1password/custom_allowed_browsers
+    fi
 }
 
 links() {
