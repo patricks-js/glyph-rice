@@ -53,6 +53,7 @@ LINKS=(
     "config/fish/functions/fish_greeting.fish   .config/fish/functions/fish_greeting.fish"
     "config/git/gitconfig                       .gitconfig"
     "config/fonts                               .local/share/fonts/glyph"
+    "wallpapers/Power.png                       Pictures/Wallpapers/Power.png"
 )
 
 say() { printf '\e[38;2;215;25;33m●\e[0m %s\n' "$*"; }
