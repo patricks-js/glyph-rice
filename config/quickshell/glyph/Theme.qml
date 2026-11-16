@@ -148,6 +148,7 @@ Singleton {
             property int recFps: 60
             property int recQuality: 2
             property bool recCursor: true
+            property string vpnUrl: ""
             property bool vpnPortal: false
         }
     }

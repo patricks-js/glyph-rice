@@ -120,30 +120,111 @@ Singleton {
         }
     }
 
-    // ---- vpn: clash verge через пункты его трея, как договор в demonshot.
-    // ponytail: подписи английские (language: en в verge); другой язык — поменять строки ----
-    readonly property var verge: SystemTray.items.values.find(i => i.title === "clash-verge" || i.id.includes("clash-verge")) ?? null
-    QsMenuOpener { id: vmenu; menu: root.verge?.menu ?? null }
-    readonly property var vpnItems: ["System Proxy", "TUN Mode"]
-    function vpnItem(l) { return vmenu.children.values.find(e => e.text.startsWith(l)) ?? null; }
-    readonly property bool vpn: vpnItems.some(l => vpnItem(l)?.checkState === Qt.Checked)
-    property var queue: []
-    function toggleVpn() {
-        if (!verge) return Quickshell.execDetached(["clash-verge"]); // спит — разбудить
-        queue = vpn ? vpnItems.filter(l => vpnItem(l)?.checkState === Qt.Checked) : vpnItems;
-        presser.start();
+    // ---- vpn: NetBird ----
+    readonly property string vpnUrl: Theme.state.vpnUrl
+    property bool vpn: false
+    property bool vpnBusy: false
+    property bool vpnInstalled: true
+    property string vpnIp: ""
+    property string vpnFqdn: ""
+    property string vpnMgmt: ""
+    property bool vpnMgmtConnected: false
+    property var vpnPeers: []
+    property var vpnProfiles: []
+
+    function refreshVpn() {
+        if (!nbStatus.running) nbStatus.running = true;
+        if (!nbProfiles.running) nbProfiles.running = true;
     }
-    // verge пересобирает меню после каждого нажатия — по одному
-    Timer {
-        id: presser
-        interval: 350
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            const [l, ...rest] = root.queue;
-            root.queue = rest;
-            if (l) root.vpnItem(l)?.triggered();
-            if (!rest.length) stop();
+
+    function toggleVpn() {
+        if (vpnBusy) return;
+        vpnBusy = true;
+        nbToggle.command = vpn
+            ? ["netbird", "down"]
+            : (vpnUrl ? ["netbird", "up", "--management-url", vpnUrl] : ["netbird", "up"]);
+        nbToggle.running = true;
+    }
+
+    function selectVpnProfile(name) {
+        if (vpnBusy || !name) return;
+        vpnBusy = true;
+        nbProfAct.command = ["netbird", "profile", "select", name];
+        nbProfAct.running = true;
+    }
+
+    function addVpnProfile(name) {
+        if (vpnBusy || !name) return;
+        vpnBusy = true;
+        nbProfAct.command = ["sh", "-c", 'netbird profile add "$1" && netbird profile select "$1"', "sh", name];
+        nbProfAct.running = true;
+    }
+
+    Process {
+        id: nbStatus
+        running: true
+        command: ["netbird", "status", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const j = JSON.parse(text);
+                    root.vpnInstalled = true;
+                    root.vpn = j.localPeerState?.state === "Connected";
+                    root.vpnIp = j.localPeerState?.netbirdIp ?? "";
+                    root.vpnFqdn = j.localPeerState?.fqdn ?? "";
+                    root.vpnMgmt = j.managementState?.url ?? "";
+                    root.vpnMgmtConnected = !!j.managementState?.connected;
+                    root.vpnPeers = (j.peers?.details ?? []).slice().sort((a, b) => {
+                        const ca = a.status === "Connected" ? 0 : 1;
+                        const cb = b.status === "Connected" ? 0 : 1;
+                        return ca - cb || (a.fqdn || "").localeCompare(b.fqdn || "");
+                    });
+                } catch (e) {
+                    root.vpn = false;
+                    root.vpnPeers = [];
+                }
+            }
+        }
+        onExited: code => {
+            if (code === 127) root.vpnInstalled = false;
+            else if (code !== 0) root.vpn = false;
         }
     }
+
+    Process {
+        id: nbProfiles
+        running: true
+        command: ["netbird", "profile", "list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const list = [];
+                for (const line of text.trim().split("\n")) {
+                    const t = line.trim();
+                    if (!t || /^NAME\b/i.test(t)) continue;
+                    const active = /\*\s*$/.test(t);
+                    const name = t.replace(/\s*\*\s*$/, "").trim().split(/\s+/)[0];
+                    if (name) list.push({ name, active });
+                }
+                root.vpnProfiles = list;
+            }
+        }
+    }
+
+    Process {
+        id: nbToggle
+        onExited: {
+            root.vpnBusy = false;
+            root.refreshVpn();
+        }
+    }
+
+    Process {
+        id: nbProfAct
+        onExited: {
+            root.vpnBusy = false;
+            root.refreshVpn();
+        }
+    }
+
+    Timer { interval: 5000; running: true; repeat: true; onTriggered: root.refreshVpn() }
 }

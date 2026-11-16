@@ -19,15 +19,10 @@ return {
     -- Apps
     terminal                   = "kitty", -- не -1: общий процесс, сломав GL после сна (AMD и Intel), белил все новые окна до перезагрузки (#12); цена — ~230 мс вместо ~20
     browser                    = "zen-browser",
-    fileExplorer               = "thunar",
+    fileExplorer               = "nautilus",
     audioSettings              = "pavucontrol",
-    -- программы спец-воркспейсов (запускаются, если там пусто) и редактор. Бинды читают их при нажатии,
-    -- так что свои — в user.lua: require("variables").apps.editor = "codium". Не установлено — откроется пустой
-    -- воркспейс. telegram и spotify ставит install.sh --with
     apps                       = {
-        sysmon        = "kitty --class btop -T btop btop",
-        music         = "spotify-launcher",
-        communication = "Telegram",
+        sysmon = "kitty --class btop -T btop btop",
     },
 
     -- Touchpad

@@ -1,47 +1,39 @@
 #!/usr/bin/env bash
-# Glyph: ставит всё на чистый Arch и линкует конфиги из этого репо.
-#   ./install.sh                   пакеты + сервисы + симлинки; спросит, что из EXTRA поставить ещё
-#   ./install.sh --with telegram   то же без вопроса (--with "" — только сам рис)
-#   ./install.sh --links           только симлинки (на уже готовой системе)
-#   ./install.sh --sddm            только тема входа (sudo); после правок в config/sddm — снова
+# Glyph: instala pacotes, serviços, symlinks e tema SDDM no Arch Linux.
+#   ./install.sh          pacotes + netbird + serviços + symlinks + sddm
+#   ./install.sh --links  apenas symlinks
+#   ./install.sh --sddm   apenas tema de login SDDM (sudo)
 set -euo pipefail
 
 DOTS="$(cd "$(dirname "$0")" && pwd)"
 BACKUP="$HOME/.dots-backup-$(date +%F_%H-%M-%S)"
 
 PACMAN=(
-    # база
+    # base
     base-devel git curl jq python
-    # сессия
+    # sessão
     hyprland hypridle hyprsunset hyprpicker xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
     sddm quickshell polkit-gnome gnome-keyring geoclue upower xdg-user-dirs
-    # звук, сеть, bluetooth
+    # áudio, rede, bluetooth
     pipewire pipewire-pulse pipewire-alsa wireplumber networkmanager bluez bluez-utils power-profiles-daemon
-    # утилиты, которые зовут бинды и шелл
+    # utilitários usados pelos binds e pelo shell
     brightnessctl playerctl wl-clipboard cliphist grim slurp swappy imagemagick libvips libqalculate
     gpu-screen-recorder ydotool libnotify trash-cli
-    # терминал и консоль
-    kitty fish starship fastfetch btop eza zoxide direnv
-    # приложения из variables.lua
-    thunar pavucontrol
-    # шрифты (cjk — каомодзи в Charms), иконки (Papirus-Dark — основа темы папок Rice), тёмная база для gtk.css
+    # terminal e console
+    kitty fish starship fastfetch btop lsd zoxide direnv
+    # apps padrão
+    nautilus pavucontrol
+    # fontes, ícones e base GTK
     ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme adw-gtk-theme
 )
 
 AUR=(
     qtengine darkly-bin bibata-cursor-theme-bin
-    zen-browser-bin
-)
-
-# на выбор, как optional components у caelestia. Что открывают бинды спец-воркспейсов — apps в hypr/variables.lua
-declare -A EXTRA=(
-    [telegram]="telegram-desktop"                                        # Super+D
-    [spotify]="spotify-launcher spicetify-cli spicetify-marketplace-bin" # Super+M
-    [clash]="clash-verge-rev-bin"                                        # панель VPN, Super+P
+    zen-browser-bin gearlever
 )
 
 G=config/quickshell/glyph
-# репо-путь → путь в $HOME
+# repo-path → path em $HOME
 LINKS=(
     "config/hypr                                .config/hypr"
     "$G                                         .config/quickshell/glyph"
@@ -61,27 +53,11 @@ LINKS=(
 
 say() { printf '\e[38;2;215;25;33m●\e[0m %s\n' "$*"; }
 
-extras() { # --with или вопрос → в EXT, ставит paru (и из репо) отдельно от AUR
-    local w; EXT=()
-    if [ -z "${WITH+x}" ]; then
-        say "anything else to install? space-separated, Enter for none"
-        for w in "${!EXTRA[@]}"; do printf '  %-9s %s\n' "$w" "${EXTRA[$w]}"; done
-        read -rp "  > " WITH || true
-    fi
-    for w in ${WITH//,/ }; do
-        [ -n "${EXTRA[$w]-}" ] || { echo "no such extra: $w (available: ${!EXTRA[*]})"; exit 1; }
-        EXT+=(${EXTRA[$w]})
-    done
-}
-
 packages() {
     say "pacman"
-    # модули pulseaudio требуют его самого — pacman не дал бы заменить его на pipewire-pulse.
-    # Списком, не grep '^pulseaudio-': pulseaudio-alsa и pulseaudio-qt с pipewire живут
     local pa; pa=$(pacman -Qq pulseaudio-{bluetooth,jack,lirc,rtp,zeroconf,equalizer,equalizer-ladspa} 2>/dev/null || true)
     [ -z "$pa" ] || sudo pacman -R $pa
     pacman -Q pulseaudio &>/dev/null && say "pacman will ask \"Remove pulseaudio?\": answer y, pipewire-pulse replaces it"
-    # без --noconfirm: на конфликте (pulseaudio → pipewire-pulse) он ответил бы «нет» и уронил установку
     sudo pacman -Syu --needed "${PACMAN[@]}"
 
     if ! command -v paru >/dev/null; then
@@ -93,18 +69,21 @@ packages() {
     fi
 
     say "aur"
-    # AUR необязателен: упал пакет — сервисы и ссылки всё равно ставим
     paru -S --needed --noconfirm "${AUR[@]}" || say "aur: some packages failed, see above"
-    # отдельно: не собрался spicetify — ядро AUR от этого не страдает
-    [ ${#EXT[@]} -eq 0 ] || paru -S --needed --noconfirm "${EXT[@]}" || say "extras: some packages failed, see above"
+
+    if ! command -v netbird >/dev/null; then
+        say "netbird"
+        curl -fsSL https://pkgs.netbird.io/install.sh | sh
+    fi
 }
 
 services() {
     say "services"
     sudo systemctl enable NetworkManager bluetooth power-profiles-daemon
+    systemctl list-unit-files netbird.service &>/dev/null && sudo systemctl enable netbird || true
     systemctl is-enabled -q display-manager.service 2>/dev/null || sudo systemctl enable sddm
     systemctl --user enable pipewire-pulse.socket wireplumber ydotool
-    sudo usermod -aG input,video "$USER" # ydotool (uinput), brightnessctl
+    sudo usermod -aG input,video "$USER"
     xdg-user-dirs-update
 }
 
@@ -123,28 +102,39 @@ links() {
         ln -s "$src" "$dst"
         echo "  $dst"
     done
-    # rules.json, glyph.json e kitty.conf o shell cria em ~/.config/glyph; rice monta tema de pastas
     mkdir -p "$HOME/.config/glyph"
-    mkdir -p "$HOME/Pictures/Wallpapers" # пикер обоев (Super+Shift+W) смотрит сюда
+    mkdir -p "$HOME/Pictures/Wallpapers"
     fc-cache -f >/dev/null
-    command -v gsettings >/dev/null || return 0 # --links на системе без GNOME-схем
-    # тёмный режим для Zen, Electron и libadwaita (через портал) и тёмная gtk3-база под наш gtk.css
+    command -v gsettings >/dev/null || return 0
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
 }
 
-greeter() { # тема входа. Копия, а не ссылка: пользователь sddm не прочтёт закрытый $HOME. fonts в теме — ссылка на config/fonts, -L копирует сами файлы
+vpn_config() {
+    local cfg="$HOME/.config/glyph/glyph.json"
+    local cur=""
+    [ -f "$cfg" ] && cur=$(jq -r '.vpnUrl // ""' "$cfg" 2>/dev/null || true)
+    say "netbird management URL (leave empty for default${cur:+, current: $cur}):"
+    local url=""
+    read -rp "  > " url || true
+    [ -n "$url" ] || return 0
+    mkdir -p "$HOME/.config/glyph"
+    if [ -f "$cfg" ]; then
+        local tmp; tmp="$(mktemp)"
+        jq --arg u "$url" '.vpnUrl = $u' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    else
+        jq -n --arg u "$url" '{ vpnUrl: $u }' > "$cfg"
+    fi
+}
+
+greeter() {
     say "sddm: glyph theme"
     [ -d /usr/share/sddm/themes ] || { say "sddm isn't installed, skipping the theme"; return 0; }
-    # rm: файлы, удалённые из репо, не остаются висеть в теме; chmod: при umask 077 копия вышла бы 600 и sddm её не прочтёт
     sudo rm -rf /usr/share/sddm/themes/glyph
     sudo cp -rLT "$DOTS/config/sddm/glyph" /usr/share/sddm/themes/glyph
     sudo chmod -R a+rX /usr/share/sddm/themes/glyph
-    # InputMethod пустой: умолчание sddm — qtvirtualkeyboard, и с этой темой вылезает экранная клавиатура на весь экран
     sudo mkdir -p /etc/sddm.conf.d
-    # zz-: файлы conf.d читаются по алфавиту, следующий перекрывает — наш последним, поверх чужих (virtualkbd.conf у astronaut)
     printf '[Theme]\nCurrent=glyph\n\n[General]\nInputMethod=\n' | sudo tee /etc/sddm.conf.d/zz-glyph.conf >/dev/null
-    # /etc/sddm.conf главнее conf.d
     if grep -qsE '^\s*Current=' /etc/sddm.conf && ! grep -qsE '^\s*Current=glyph\s*$' /etc/sddm.conf; then
         say "/etc/sddm.conf sets its own theme and wins over conf.d: set Current=glyph there"
     fi
@@ -153,13 +143,10 @@ greeter() { # тема входа. Копия, а не ссылка: польз�
 [ "$EUID" -eq 0 ] && { echo "run as your user, not root: sudo asks when it needs to"; exit 1; }
 
 case "${1:-}" in
-    --links) links ;; # на любом дистрибутиве (NixOS, Fedora…): пакеты тогда свои, список — в README
+    --links) links ;;
     --sddm) greeter ;;
-    ""|--with) command -v pacman >/dev/null || { echo "packages install on Arch only; on another distro: $0 --links"; exit 1; }
-        [ "${1:-}" = --with ] && WITH="${*:2}" # и через запятую, и через пробел
-        extras; packages; services; links; greeter
-        # spicetify нужен уже скачанный Spotify с входом в аккаунт, поэтому применять до первого запуска нечего
-        [[ " ${WITH//,/ } " == *" spotify "* ]] && say "spotify: launch it, log in, then run spicetify config custom_apps marketplace && spicetify backup apply"
+    "") command -v pacman >/dev/null || { echo "packages install on Arch only; on another distro: $0 --links"; exit 1; }
+        packages; services; links; vpn_config; greeter
         say "done. reboot and pick Hyprland in sddm" ;;
-    *) echo "usage: $0 [--with telegram,spotify,clash | --links | --sddm]"; exit 1 ;;
+    *) echo "usage: $0 [--links | --sddm]"; exit 1 ;;
 esac
