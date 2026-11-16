@@ -21,3 +21,4 @@ hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 
 -- Others
 hl.env("_JAVA_AWT_WM_NONREPARENTING", "1")
+hl.env("SSH_AUTH_SOCK", os.getenv("HOME") .. "/.1password/agent.sock")

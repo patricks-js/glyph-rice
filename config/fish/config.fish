@@ -1,5 +1,6 @@
 # rice и прочее из install.sh лежит в ~/.local/bin, а Arch его в PATH не кладёт
 fish_add_path -g ~/.local/bin
+test -S ~/.1password/agent.sock; and set -gx SSH_AUTH_SOCK ~/.1password/agent.sock
 
 if status is-interactive
     # Starship custom prompt
