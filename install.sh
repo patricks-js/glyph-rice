@@ -30,7 +30,7 @@ PACMAN=(
 
 AUR=(
     qtengine darkly-bin bibata-cursor-theme-bin
-    zen-browser-bin gearlever
+    zen-browser-bin google-chrome gearlever
     1password beekeeper-studio-bin bruno-bin
 )
 
@@ -51,6 +51,7 @@ LINKS=(
     "$G/term/gtk-4.0/gtk.css                    .config/gtk-4.0/gtk.css"
     "config/fish/config.fish                    .config/fish/config.fish"
     "config/fish/functions/fish_greeting.fish   .config/fish/functions/fish_greeting.fish"
+    "config/git/gitconfig                       .gitconfig"
     "config/fonts                               .local/share/fonts/glyph"
 )
 
@@ -65,10 +66,7 @@ packages() {
 
     if ! command -v paru >/dev/null; then
         say "paru"
-        local tmp; tmp="$(mktemp -d)"
-        git clone --depth 1 https://aur.archlinux.org/paru-bin.git "$tmp/paru-bin"
-        (cd "$tmp/paru-bin" && makepkg -si --noconfirm)
-        rm -rf "$tmp"
+        sudo pacman -S --needed --noconfirm paru
     fi
 
     say "aur"
@@ -77,6 +75,16 @@ packages() {
     if ! command -v netbird >/dev/null; then
         say "netbird"
         curl -fsSL https://pkgs.netbird.io/install.sh | sh
+    fi
+
+    if ! command -v bun >/dev/null && [ ! -x "$HOME/.bun/bin/bun" ]; then
+        say "bun"
+        curl -fsSL https://bun.sh/install | bash
+    fi
+
+    if ! command -v brew >/dev/null && [ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+        say "homebrew"
+        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
 }
 

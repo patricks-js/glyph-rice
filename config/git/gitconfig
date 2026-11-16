@@ -1,0 +1,50 @@
+[init]
+    defaultBranch = main
+
+[user]
+    name = Patrick Lino
+    email = lucas.patrick.lsilva@gmail.com
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIPl0mt2IRlcYcnmddRVTXoY4bRRqgSFvOqM0CgZm+Lu
+
+[core]
+    editor = nvim
+
+[pull]
+    rebase = false
+
+[push]
+    autoSetupRemote = true
+
+[rerere]
+    enabled = true
+
+[alias]
+    st = status -s
+    conf = config --global --edit
+    l = log --pretty=format:'%C(blue)%h%C(red)%d %C(white)%s - %C(cyan)%cn, %C(green)%cr'
+    a = add .
+    b = branch
+    cm = commit -m
+    ci = !git a && git cm
+    cn = clone
+    rls = remote -v
+    pr = pull --rebase
+    ps = push
+    psm = !git ps origin main
+    undo = checkout .
+    rollback = reset --soft HEAD~1
+    ck = switch
+    bra = branch -a
+    amend = commit --amend --no-edit
+    ignore = "!f() { git rm --cached `git ls-files -i -c --exclude-from=.gitignore`; } ; f"
+    tree = log --oneline --graph --all
+    fl = push --force-with-lease
+
+[gpg]
+    format = ssh
+
+[gpg "ssh"]
+    program = /opt/1Password/op-ssh-sign
+
+[commit]
+    gpgsign = true
