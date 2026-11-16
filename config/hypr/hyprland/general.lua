@@ -2,7 +2,7 @@ local vars = require("variables")
 
 hl.config({
     general = {
-        layout          = "scrolling",
+        layout          = vars.defaultLayout or "dwindle",
 
         allow_tearing   = false, -- Allows `immediate` window rule to work
 
@@ -32,3 +32,7 @@ hl.config({
         explicit_column_widths   = "0.35, 0.5, 0.65, 1.0",
     },
 })
+
+for ws, ws_layout in pairs(vars.workspaceLayouts or {}) do
+    hl.workspace_rule({ workspace = tostring(ws), layout = ws_layout })
+end

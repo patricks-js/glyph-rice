@@ -52,6 +52,12 @@ return {
     windowGapsIn               = 6,
     windowGapsOut              = 14,
 
+    -- Layout padrão ("dwindle" ou "scrolling") e override por workspace
+    defaultLayout              = "dwindle",
+    workspaceLayouts           = {
+        -- [2] = "scrolling",
+    },
+
     -- Window styling
     windowOpacity              = 1,
     windowRounding             = 20,
