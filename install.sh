@@ -25,7 +25,7 @@ PACMAN=(
     nautilus pavucontrol
     discord distrobox obs-studio v4l2loopback-dkms obsidian zed
     # fontes, ícones e base GTK
-    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme adw-gtk-theme
+    ttf-jetbrains-mono-nerd ttf-cascadia-code-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme adw-gtk-theme
 )
 
 AUR=(

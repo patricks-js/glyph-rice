@@ -174,7 +174,7 @@ Singleton {
            + `misc = { background_color = ${c(bg)} } })`);
 
         kitty.setText("# glyph: gerado por Theme.apply(), não editar manualmente\n" + [
-            ["font_family", "Space Mono"], ["window_padding_width", "26 30"], ["cursor_trail", "0"],
+            ["font_family", "CaskaydiaCove Nerd Font"], ["window_padding_width", "26 30"], ["cursor_trail", "0"],
             ["foreground", fg], ["background", s1], ["cursor", fg], ["cursor_text_color", s1],
             ["selection_foreground", fg], ["selection_background", s3], ["url_color", grey],
             ["active_border_color", fg], ["inactive_border_color", s3],
