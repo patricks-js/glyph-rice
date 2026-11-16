@@ -46,6 +46,7 @@ LINKS=(
     "$G/term/starship.toml                      .config/starship.toml"
     "$G/term/fastfetch                          .config/fastfetch"
     "$G/term/btop                               .config/btop"
+    "$G/term/lsd                                .config/lsd"
     "$G/term/gtk-3.0/gtk.css                    .config/gtk-3.0/gtk.css"
     "$G/term/gtk-4.0/gtk.css                    .config/gtk-4.0/gtk.css"
     "config/fish/config.fish                    .config/fish/config.fish"
