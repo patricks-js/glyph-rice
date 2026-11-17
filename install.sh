@@ -23,7 +23,7 @@ PACMAN=(
     kitty fish starship fastfetch btop lsd zoxide direnv
     # apps padrão e utilitários
     nautilus pavucontrol
-    discord distrobox obs-studio v4l2loopback-dkms obsidian zed
+    discord distrobox obs-studio v4l2loopback-dkms obsidian
     # fontes, ícones e base GTK
     ttf-jetbrains-mono-nerd ttf-cascadia-code-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji papirus-icon-theme adw-gtk-theme
 )
@@ -31,7 +31,7 @@ PACMAN=(
 AUR=(
     qtengine darkly-bin bibata-cursor-theme-bin
     zen-browser-bin google-chrome gearlever
-    1password beekeeper-studio-bin bruno-bin
+    1password
 )
 
 G=config/quickshell/glyph
@@ -86,6 +86,11 @@ packages() {
     if ! command -v brew >/dev/null && [ ! -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         say "homebrew"
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
+
+    if ! command -v zed >/dev/null && [ ! -x "$HOME/.local/bin/zed" ]; then
+        say "zed"
+        curl -f https://zed.dev/install.sh | sh
     fi
 }
 

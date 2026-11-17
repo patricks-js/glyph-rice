@@ -23,7 +23,7 @@ return {
     audioSettings              = "pavucontrol",
     apps                       = {
         sysmon = "kitty --class btop -T btop btop",
-        editor = "zeditor",
+        editor = home .. "/.local/bin/zed",
     },
 
     -- Touchpad
