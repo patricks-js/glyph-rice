@@ -117,7 +117,7 @@ return {
     -- Misc
     kbSession                  = "CTRL + ALT + Delete",
     kbPower                    = "SUPER + Escape",
-    kbAltar                    = "SUPER + N",
+    kbAltar                    = "SUPER + Space",
     kbLock                     = "SUPER + L",
     kbRestoreLock              = "SUPER + ALT + L",
 }
