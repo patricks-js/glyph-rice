@@ -1,36 +1,15 @@
 local vars = require("variables")
 local fn   = require("hyprland.functions")
 
--- глобалки шелла — shell:<имя>: их регистрирует тот шелл, что сейчас живой (demonshot, glyph), чего у него нет — молчит
--- Launcher: тап Super открывает на отпускании. Без interrupt-ов Super+1 тоже открыл бы лаунчер,
--- поэтому каждый Super+<key> не поглощая шлёт launcherInterrupt (bindin catchall сломан с 0.55)
-hl.bind("SUPER + SUPER_L", hl.dsp.global("shell:launcher"), { release = true })
--- после Super+<key> release-бинд выше не срабатывает и interrupt залипает — сбрасываем на нажатии Super
-hl.bind("SUPER_L", hl.dsp.global("shell:launcherArm"), { ignore_mods = true, non_consuming = true })
-for _, key in ipairs({
-    -- secondary modifiers: cover every Super+Mod+key combo
-    "Control_L", "Control_R", "Shift_L", "Shift_R", "Alt_L", "Alt_R",
-    -- workspaces
-    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-    -- Super+<key> binds below
-    "Q", "W", "E", "R", "T", "A", "D", "F", "G", "K", "L", "C", "V", "M", "N", "P",
-    "Z", "X", "U", "S", "H", "I", "space", "Escape",
-    "Comma", "Period", "Minus", "Equal", "Backslash",
-    "left", "right", "up", "down",
-    "Page_Up", "Page_Down", "F12",
-    "mouse:272", "mouse:273", "mouse:274", "mouse:275", "mouse:276", "mouse:277",
-    "mouse_up", "mouse_down",
-}) do
-    hl.bind("SUPER + " .. key, hl.dsp.global("shell:launcherInterrupt"), { non_consuming = true })
-end
+-- Launcher & Shell globals
+hl.bind("SUPER + A", hl.dsp.global("shell:launcher"))
 
 -- Misc
 hl.bind(vars.kbAltar, hl.dsp.global("shell:altar"))
 hl.bind("SUPER + I", hl.dsp.global("shell:settings"))
-hl.bind("SUPER + N", hl.dsp.global("shell:ward"))
 hl.bind("SUPER + P", hl.dsp.global("shell:pact"))
-hl.bind("SUPER + A", hl.dsp.global("shell:quick")) -- быстрые настройки glyph
-hl.bind("SUPER + SHIFT + W", hl.dsp.global("shell:wall")) -- обои glyph
+hl.bind("SUPER + SHIFT + W", hl.dsp.global("shell:wall"))
+hl.bind("SUPER + Space", hl.dsp.exec_cmd("hyprctl switchxkblayout all next"))
 hl.bind(vars.kbSession, hl.dsp.global("shell:power"))
 hl.bind(vars.kbPower, hl.dsp.global("shell:power"))
 hl.bind(vars.kbLock, hl.dsp.exec_cmd(vars.lockCmd))

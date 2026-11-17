@@ -23,6 +23,7 @@ return {
     audioSettings              = "pavucontrol",
     apps                       = {
         sysmon = "kitty --class btop -T btop btop",
+        editor = "zeditor",
     },
 
     -- Touchpad
@@ -108,7 +109,7 @@ return {
     kbTodoWs                   = "SUPER + R",
 
     -- Apps
-    kbTerminal                 = "SUPER + Q",
+    kbTerminal                 = "SUPER + T",
     kbBrowser                  = "SUPER + W",
     kbEditor                   = "SUPER + SHIFT + K",
     kbFileExplorer             = "SUPER + E",
@@ -116,7 +117,7 @@ return {
     -- Misc
     kbSession                  = "CTRL + ALT + Delete",
     kbPower                    = "SUPER + Escape",
-    kbAltar                    = "SUPER + Space",
+    kbAltar                    = "SUPER + N",
     kbLock                     = "SUPER + L",
     kbRestoreLock              = "SUPER + ALT + L",
 }

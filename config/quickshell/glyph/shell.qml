@@ -87,17 +87,7 @@ ShellRoot {
         function onGameChanged() { Rules.motion(); Theme.apply(); }
     }
 
-    property bool interrupted: false
-    Shortcut {
-        name: "launcher"
-        description: "launcher (tap Super)"
-        onReleased: {
-            if (!shell.interrupted) launcher.toggle();
-            shell.interrupted = false;
-        }
-    }
-    Shortcut { name: "launcherArm"; description: "press Super — reset interrupt"; onPressed: shell.interrupted = false }
-    Shortcut { name: "launcherInterrupt"; description: "Super+<key> — do not open launcher"; onPressed: shell.interrupted = true }
+    Shortcut { name: "launcher"; description: "launcher (Super+A)"; onPressed: launcher.toggle() }
     Shortcut { name: "altar"; description: "deck: bottom dashboard"; onPressed: deck.toggle() }
     Shortcut { name: "quick"; description: "quick settings"; onPressed: quick.toggle() }
     Shortcut { name: "ward"; description: "quick settings"; onPressed: quick.toggle() }
