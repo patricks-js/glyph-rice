@@ -46,6 +46,8 @@ Singleton {
             property bool motion: true
             property bool ultra: false   // режим ultra (setMode 0): 60 Гц и без украшений поверх настроек
             property bool game: false    // игровой, как в caelestia: без анимаций, blur, теней, зазоров и скруглений, tearing (Theme.apply)
+            property string defaultLayout: "dwindle"
+            property var wsLayouts: ({})
             // Colors
             property int palette: 0
             property bool paintHypr: true
@@ -75,6 +77,16 @@ Singleton {
     }
 
     function hypr(lua) { Quickshell.execDetached(["hyprctl", "eval", lua]); }
+
+    function layout() {
+        const def = store.defaultLayout || "dwindle";
+        let lua = `hl.config({ general = { layout = "${def}" } })`;
+        for (let i = 1; i <= 10; i++) {
+            const l = store.wsLayouts?.[String(i)] || def;
+            lua += `; hl.workspace_rule({ workspace = "${i}", layout = "${l}" })`;
+        }
+        hypr(lua);
+    }
 
     // мониторы из hyprctl monitors all — включённые и не зеркала: w × h и rates — текущий режим и его частоты, x, y, lw × lh —
     // где он и сколько в нём логических px (повёрнутый — наоборот)

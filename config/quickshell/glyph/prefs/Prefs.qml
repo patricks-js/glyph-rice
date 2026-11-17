@@ -805,6 +805,59 @@ PanelWindow {
                 Dial { id: rnd; label: "rounding"; to: 40; value: Theme.state.rounding; onMoved: v => Theme.state.rounding = v } // shell.qml сам зовёт Theme.apply
                 Dial { id: pan; label: "panels"; to: 100; step: 5; value: Theme.state.corners; onMoved: v => Theme.state.corners = v } // углы шелла, %
             }
+
+            Row {
+                spacing: 24
+                Pick {
+                    label: "layout"
+                    opts: ["dwindle", "scrolling"]
+                    cur: root.r.defaultLayout === "scrolling" ? 1 : 0
+                    onPicked: i => {
+                        root.r.defaultLayout = ["dwindle", "scrolling"][i];
+                        Rules.layout();
+                    }
+                }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 8
+                    Lb { text: "scrolling workspaces · click to toggle"; px: 10 }
+                    Row {
+                        spacing: 8
+                        Repeater {
+                            model: 10
+                            Rectangle {
+                                required property int index
+                                readonly property int ws: index + 1
+                                readonly property string eff: root.r.wsLayouts?.[String(ws)] || root.r.defaultLayout || "dwindle"
+                                readonly property bool scr: eff === "scrolling"
+                                width: 42
+                                height: 42
+                                radius: Theme.corner(21)
+                                color: scr ? Theme.fg : Theme.s2
+                                border { width: 1; color: scr ? Theme.fg : Theme.s3 }
+                                Behavior on color { ColorAnimation { duration: Theme.t } }
+                                Lb {
+                                    anchors.centerIn: parent
+                                    text: parent.ws
+                                    px: 12
+                                    color: parent.scr ? Theme.ink : Theme.grey
+                                }
+                                TapHandler {
+                                    onTapped: {
+                                        const next = parent.scr ? "dwindle" : "scrolling";
+                                        const o = Object.assign({}, root.r.wsLayouts);
+                                        if (next === root.r.defaultLayout) delete o[String(parent.ws)];
+                                        else o[String(parent.ws)] = next;
+                                        root.r.wsLayouts = o;
+                                        Rules.layout();
+                                    }
+                                }
+                                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // ---- DISPLAY: экраны, как их расставил hypr (клик или ←→ — выбрать); всё ниже — выбранного: яркость (у встроенного),

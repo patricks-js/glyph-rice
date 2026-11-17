@@ -61,6 +61,7 @@ ShellRoot {
         Rules.monitor();
         Rules.input();
         Rules.motion();
+        Rules.layout();
         Theme.apply();
     }
     Connections {
