@@ -111,7 +111,7 @@ links() {
     for l in "${LINKS[@]}"; do
         read -r src dst <<<"$l"
         src="$DOTS/$src" dst="$HOME/$dst"
-        [ "$(readlink "$dst")" = "$src" ] && continue
+        [ "$(readlink "$dst" 2>/dev/null || true)" = "$src" ] && continue
         if [ -e "$dst" ] || [ -L "$dst" ]; then
             mkdir -p "$BACKUP/$(dirname "${dst#"$HOME"/}")"
             mv "$dst" "$BACKUP/${dst#"$HOME"/}"

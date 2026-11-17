@@ -19,7 +19,10 @@ PanelWindow {
     readonly property int onlinePeers: peers.filter(p => p.status === "Connected").length
 
     property date since: new Date()
-    onConnectedChanged: if (connected) since = new Date()
+    onConnectedChanged: {
+        if (connected) since = new Date();
+        else { up = 0; down = 0; prevNet = [0, 0, 0]; }
+    }
 
     function flip() { Sys.toggleVpn(); }
 
@@ -53,7 +56,6 @@ PanelWindow {
             root.prevNet = [f[0], f[8], now];
         }
     }
-    onConnectedChanged: if (!connected) { up = 0; down = 0; prevNet = [0, 0, 0]; }
 
     // Matriz de tráfego: 50 colunas de 12s (10 minutos)
     readonly property var cols: {
