@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import qs
 import qs.components
 import qs.services
+import qs.settings
 
 // deck: дашборд снизу по центру, как у caelestia, только из-под нижнего края. Курсор у края (полоса 2 px) 150 мс —
 // панель выезжает, ушёл с неё — через 300 мс прячется. Секции — Theme.state.deck по порядку (id из Theme.decks), колонками.
@@ -116,11 +117,15 @@ Scope {
                 }
             }
 
-            // часы, дата, неделя; световой день сегментами от восхода до заката
+            // часы, дата, неделя; световой день сегментами от восхода до заката + layout do workspace atual
             Component {
                 id: clockC
                 Column {
                     width: 216
+                    readonly property int ws: Hyprland.focusedWorkspace?.id ?? 1
+                    readonly property string wsLayout: Rules.store.wsLayouts?.[String(ws)] || Rules.store.defaultLayout || "dwindle"
+                    readonly property bool scrolling: wsLayout === "scrolling"
+
                     Lb { text: root.en.dayName(clock.date.getDay()) + (Theme.state.clock24 ? "" : clock.date.getHours() < 12 ? " · am" : " · pm") }
                     Num {
                         topPadding: lead + 10
@@ -128,13 +133,59 @@ Scope {
                         font.pixelSize: 72
                     }
                     Lb { topPadding: 12; text: `${root.en.toString(clock.date, "d MMMM")} · week ${root.week(clock.date)}` }
-                    Item { width: 1; height: 24 }
+                    Item { width: 1; height: 12 }
                     Seg { width: parent.width; height: 6; n: 24; f: Weather.sun ? (clock.date - Weather.sun.rise) / (Weather.sun.set - Weather.sun.rise) : 0 }
                     Item {
                         width: parent.width
-                        height: 28
-                        Meta { y: 12; icon: "\u{F059C}"; text: Weather.sun ? root.hm(Weather.sun.rise) : "--:--" }
-                        Meta { y: 12; anchors.right: parent.right; icon: "\u{F059B}"; text: Weather.sun ? root.hm(Weather.sun.set) : "--:--" }
+                        height: 24
+                        Meta { y: 8; icon: "\u{F059C}"; text: Weather.sun ? root.hm(Weather.sun.rise) : "--:--" }
+                        Meta { y: 8; anchors.right: parent.right; icon: "\u{F059B}"; text: Weather.sun ? root.hm(Weather.sun.set) : "--:--" }
+                    }
+                    Item { width: 1; height: 14 }
+                    Row {
+                        width: parent.width
+                        spacing: 8
+                        Lb {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 36
+                            text: `ws ${ws}`
+                            px: 10
+                            color: Theme.fg
+                        }
+                        Rectangle {
+                            id: lbox
+                            width: parent.width - 44
+                            height: 36
+                            radius: Theme.corner(18)
+                            color: Theme.s2
+                            readonly property real sw: (width - 6) / 2
+                            Rectangle {
+                                x: 3 + (scrolling ? lbox.sw : 0)
+                                y: 3
+                                width: lbox.sw
+                                height: parent.height - 6
+                                radius: height / 2
+                                color: Theme.fg
+                                Behavior on x { NumberAnimation { duration: Theme.t; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.glide } }
+                            }
+                            Row {
+                                x: 3
+                                y: 3
+                                Repeater {
+                                    model: ["dwindle", "scrolling"]
+                                    Item {
+                                        required property string modelData
+                                        required property int index
+                                        readonly property bool on: (index === 1) === scrolling
+                                        width: lbox.sw
+                                        height: lbox.height - 6
+                                        Lb { anchors.centerIn: parent; text: modelData; px: 10; color: on ? Theme.ink : Theme.grey }
+                                        TapHandler { onTapped: Rules.setWsLayout(ws, modelData) }
+                                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -88,6 +88,14 @@ Singleton {
         hypr(lua);
     }
 
+    function setWsLayout(ws, l) {
+        const o = Object.assign({}, store.wsLayouts);
+        if (l === (store.defaultLayout || "dwindle")) delete o[String(ws)];
+        else o[String(ws)] = l;
+        store.wsLayouts = o;
+        layout();
+    }
+
     // мониторы из hyprctl monitors all — включённые и не зеркала: w × h и rates — текущий режим и его частоты, x, y, lw × lh —
     // где он и сколько в нём логических px (повёрнутый — наоборот)
     property var mons: []

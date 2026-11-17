@@ -843,14 +843,7 @@ PanelWindow {
                                     color: parent.scr ? Theme.ink : Theme.grey
                                 }
                                 TapHandler {
-                                    onTapped: {
-                                        const next = parent.scr ? "dwindle" : "scrolling";
-                                        const o = Object.assign({}, root.r.wsLayouts);
-                                        if (next === root.r.defaultLayout) delete o[String(parent.ws)];
-                                        else o[String(parent.ws)] = next;
-                                        root.r.wsLayouts = o;
-                                        Rules.layout();
-                                    }
+                                    onTapped: Rules.setWsLayout(parent.ws, parent.scr ? "dwindle" : "scrolling")
                                 }
                                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                             }
