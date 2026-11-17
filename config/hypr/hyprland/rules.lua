@@ -76,6 +76,12 @@ hl.window_rule({
     idle_inhibit = "always",
 })
 
+-- Browsers at 70% column width in scrolling layout
+hl.window_rule({
+    match           = { class = "^(zen(-.*)?|app\\.zen_browser\\.zen|[Gg]oogle-chrome)$" },
+    scrolling_width = 0.7,
+})
+
 -- Picture in picture (resize and move done via script)
 hl.window_rule({
     match             = { title = "Picture(-| )in(-| )[Pp]icture" },
