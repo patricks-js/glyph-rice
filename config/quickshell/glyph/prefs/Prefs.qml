@@ -958,12 +958,12 @@ PanelWindow {
                     }
                     Lb { text: "logical pixels" }
                 }
-                // подсветка — у встроенного; внешние по DDC — нет (services/Backlight)
+                // подсветка — у встроенного и внешних по DDC/CI (services/Backlight)
                 Column {
-                    visible: Sys.hasBri && disp.m.name === Rules.mon.name
+                    visible: Sys.hasBriFor(disp.m.name)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 22
-                    Dial { anchors.horizontalCenter: parent.horizontalCenter; size: 300; n: 60; live: true; label: "brightness"; value: Math.round(Sys.bri * 100); onMoved: v => Sys.setBri(v / 100) }
+                    Dial { anchors.horizontalCenter: parent.horizontalCenter; size: 300; n: 60; live: true; label: "brightness"; value: Math.round(Sys.briFor(disp.m.name) * 100); onMoved: v => Sys.setBriFor(disp.m.name, v / 100) }
                     // шаг клавиш яркости: делений на шкалу (Backlight.steps)
                     Pick { anchors.horizontalCenter: parent.horizontalCenter; label: "step"; opts: ["2.5%", "5%", "10%"]; cur: [40, 20, 10].indexOf(Theme.state.briSteps); onPicked: i => Theme.state.briSteps = [40, 20, 10][i] }
                 }
@@ -986,6 +986,12 @@ PanelWindow {
             Row {
                 spacing: 40
                 Toggle { anchors.verticalCenter: parent.verticalCenter; text: "night light"; on: Sys.night; onFlip: Sys.toggleNight() }
+                Toggle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: `auto (${String(Math.floor(root.r.nightStart / 60)).padStart(2, "0")}:${String(root.r.nightStart % 60).padStart(2, "0")}–${String(Math.floor(root.r.nightEnd / 60)).padStart(2, "0")}:${String(root.r.nightEnd % 60).padStart(2, "0")})`
+                    on: root.r.nightAuto
+                    onFlip: { root.r.nightAuto = !root.r.nightAuto; if (root.r.nightAuto) Rules.resetNightSchedule(); }
+                }
                 Dial { label: "warmth · k · all screens"; from: 2500; to: 6500; step: 100; value: root.r.warmth; onMoved: v => { root.r.warmth = v; if (root.r.night) Rules.night(); } }
             }
         }

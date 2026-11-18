@@ -1,5 +1,7 @@
 local vars = require("variables")
 
+local browser_class = "^(zen(-.*)?|app\\.zen_browser\\.zen|[Gg]oogle-chrome)$"
+
 ----------------------
 ---- Window rules ----
 ----------------------
@@ -29,6 +31,14 @@ hl.window_rule({
 hl.window_rule({ match = { class = "steam", title = "Friends List" }, tag = "+float" })
 hl.window_rule({ match = { class = "com-atlauncher-App", title = "ATLauncher Console" }, tag = "+float" })
 hl.window_rule({ match = { class = "PandoraLauncher", title = "Minecraft Game Output" }, tag = "+float" })
+hl.window_rule({
+    match = {
+        class = browser_class,
+        title =
+        "^(Extension:|Ext:|Developer Tools|DevTools|About (Zen|Google Chrome)|Page Info|Sign in|Log in|Entrar|Fazer login|Google Accounts|Contas do Google|Authoriz|Casting)",
+    },
+    tag   = "+float",
+})
 
 hl.window_rule({ match = { tag = "float" }, float = true })
 
@@ -78,7 +88,7 @@ hl.window_rule({
 
 -- Browsers at 70% column width in scrolling layout
 hl.window_rule({
-    match           = { class = "^(zen(-.*)?|app\\.zen_browser\\.zen|[Gg]oogle-chrome)$" },
+    match           = { class = browser_class },
     scrolling_width = 0.7,
 })
 

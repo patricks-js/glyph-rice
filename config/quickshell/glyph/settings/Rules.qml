@@ -12,7 +12,7 @@ Singleton {
     readonly property string dir: Quickshell.env("HOME") + "/.config/glyph"
     readonly property alias store: adapter
 
-    Component.onCompleted: file.waitForJob()
+    Component.onCompleted: { file.waitForJob(); checkNightSchedule(); }
 
     FileView {
         id: file
@@ -36,6 +36,9 @@ Singleton {
             property var outs: ({})
             property int brightness: 62
             property bool night: false
+            property bool nightAuto: true
+            property int nightStart: 17 * 60 + 20   // 17:20 (minutos desde 00:00)
+            property int nightEnd: 7 * 60           // 07:00
             property int warmth: 4300
             property int gapsIn: 6
             property int gapsOut: 14
@@ -286,6 +289,27 @@ Singleton {
     function night() {
         Quickshell.execDetached(["sh", "-c", store.night ? `pkill -x hyprsunset; exec hyprsunset -t ${store.warmth}` : "pkill -x hyprsunset"]);
     }
+    property int _nightWindow: -1
+    function checkNightSchedule() {
+        if (!store.nightAuto) return;
+        const d = new Date();
+        const now = d.getHours() * 60 + d.getMinutes();
+        const s = store.nightStart, e = store.nightEnd;
+        const should = s <= e ? (now >= s && now < e) : (now >= s || now < e);
+        const w = should ? 1 : 0;
+        if (w !== _nightWindow) {
+            _nightWindow = w;
+            if (store.night !== should) {
+                store.night = should;
+                night();
+            }
+        }
+    }
+    function resetNightSchedule() {
+        _nightWindow = -1;
+        checkNightSchedule();
+    }
+    Timer { interval: 30000; running: store.nightAuto; repeat: true; onTriggered: root.checkNightSchedule() }
 
     readonly property var modes: [
         { name: "ultra", short: "ULT", what: `power saver · ${rates[0]} hz · still` },

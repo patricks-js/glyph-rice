@@ -36,10 +36,15 @@ Singleton {
     PwNodeLinkTracker { id: micUse; node: root.mic }
     readonly property bool live: rec || micUse.linkGroups.length > 0
 
-    // ---- яркость: общий с demonshot Backlight (устройство ищет brightnessctl) ----
+    // ---- яркость: встроенная (brightnessctl) + внешние по DDC/CI (ddcutil) ----
     readonly property real bri: Backlight.value
-    readonly property bool hasBri: !!Backlight.dev // нет подсветки (ПК с монитором) — регуляторов яркости нет
+    readonly property bool hasBri: Backlight.available
+    signal briMoved()
     function setBri(v) { Backlight.set(v); }
+    function hasBriFor(mon) { return Backlight.hasFor(mon); }
+    function briFor(mon) { return Backlight.valueFor(mon); }
+    function setBriFor(mon, v) { Backlight.setFor(mon, v); }
+    Connections { target: Backlight; function onMoved() { root.briMoved(); } }
     Binding { target: Backlight; property: "steps"; value: Theme.state.briSteps }
 
     // ---- раскладка: старт — main-клавиатура из hyprctl, дальше событие activelayout ----
@@ -106,15 +111,18 @@ Singleton {
     // адаптеру нужно время после включения
     Timer { id: btResumeT; interval: 1500; onTriggered: { for (const d of Bluetooth.devices.values) if (root.btResume.includes(d.address) && !d.connected) d.connect(); } }
 
-    // ---- кофеин: не спать. Ингибитору нужно живое окно — невидимое 0×0, как в demonshot ----
+    // ---- кофеин: не спать. Ингибитору нужно живое окно — невидимое 1×1 (0×0 не маппится в Wayland) ----
     property bool caffeine: false
     IdleInhibitor {
         enabled: root.caffeine
         window: PanelWindow {
-            implicitWidth: 0
-            implicitHeight: 0
+            visible: root.caffeine
+            anchors { top: true; left: true }
+            implicitWidth: 1
+            implicitHeight: 1
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "glyph-caffeine"
             mask: Region {}
         }

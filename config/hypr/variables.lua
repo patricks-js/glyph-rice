@@ -22,8 +22,10 @@ return {
     fileExplorer               = "nautilus",
     audioSettings              = "pavucontrol",
     apps                       = {
-        sysmon = "kitty --class btop -T btop btop",
-        editor = home .. "/.local/bin/zed",
+        sysmon        = "kitty --class btop -T btop btop",
+        editor        = home .. "/.local/bin/zed",
+        communication = "discord",
+        music         = home .. "/.local/bin/meiro",
     },
 
     -- Touchpad

@@ -36,7 +36,7 @@ Scope {
     }
     Connections {
         target: Sys
-        function onBriChanged() { root.level("bri", Sys.bri); }
+        function onBriMoved() { root.level("bri", Sys.bri); }
     }
     Timer { id: sideT; interval: 3000; onTriggered: side.shown = false }
 
